@@ -1,0 +1,3005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Programming Graphics Reviewer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{
+    --bg:#0d1117;
+    --panel:#131a24;
+    --panel-2:#171f2c;
+    --line:#25313f;
+    --text:#dbe4ee;
+    --dim:#7c8a9c;
+    --accent:#39d98a;
+    --accent-dim:#1f6b48;
+    --bad:#ff6b6b;
+    --bad-dim:#5c2626;
+    --amber:#f0b64c;
+    --blue:#5aa9e6;
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: 'IBM Plex Sans', -apple-system, Segoe UI, Roboto, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(57,217,138,0.06), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    display:flex;
+    min-height:100vh;
+  }
+  ::selection{background:var(--accent-dim);}
+  button{font-family:var(--mono);}
+
+  /* ---------- Sidebar ---------- */
+  #sidebar{
+    width:290px; flex:0 0 290px;
+    background:var(--panel);
+    border-right:1px solid var(--line);
+    padding:18px 16px 16px;
+    display:flex; flex-direction:column; gap:12px;
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .brand{font-family:var(--mono); font-size:12px; letter-spacing:.12em; color:var(--accent); text-transform:uppercase;}
+  .brand-sub{font-size:17px; font-weight:600; line-height:1.25; margin-top:4px;}
+
+  .sideBlock{background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:10px 12px;}
+  .sideBlock label{font-family:var(--mono); font-size:11px; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:6px;}
+  select.sideSelect{
+    width:100%; background:#0a0f16; color:var(--text); border:1px solid var(--line);
+    border-radius:6px; padding:8px 9px; font-family:var(--mono); font-size:12.5px;
+  }
+
+  #modeTabs{display:flex; gap:6px;}
+  .modeTab{
+    flex:1; text-align:center; padding:8px 4px; border-radius:6px; border:1px solid var(--line);
+    background:#0a0f16; color:var(--dim); font-family:var(--mono); font-size:11.5px; cursor:pointer;
+    text-transform:uppercase; letter-spacing:.03em;
+  }
+  .modeTab.active{background:rgba(57,217,138,0.14); color:var(--accent); border-color:var(--accent);}
+
+  .toggleRow{display:flex; align-items:center; justify-content:space-between; font-family:var(--mono); font-size:12px; margin-bottom:6px;}
+  .toggleRow:last-child{margin-bottom:0;}
+  .switch{position:relative; width:34px; height:18px; flex:0 0 auto;}
+  .switch input{opacity:0; width:0; height:0;}
+  .slider{position:absolute; cursor:pointer; inset:0; background:#0a0f16; border:1px solid var(--line); border-radius:18px; transition:.15s;}
+  .slider:before{content:""; position:absolute; height:12px; width:12px; left:2px; top:2px; background:var(--dim); border-radius:50%; transition:.15s;}
+  .switch input:checked + .slider{background:rgba(57,217,138,0.2); border-color:var(--accent);}
+  .switch input:checked + .slider:before{transform:translateX(15px); background:var(--accent);}
+
+  #scoreWrap .row{display:flex; justify-content:space-between; margin-bottom:4px; font-family:var(--mono); font-size:12px;}
+  #scoreWrap .row:last-child{margin-bottom:0;}
+  #scoreWrap .val{color:var(--accent);}
+  #progressBarOuter{height:6px; background:#0a0f16; border-radius:4px; overflow:hidden; margin-top:8px; border:1px solid var(--line);}
+  #progressBarInner{height:100%; width:0%; background:linear-gradient(90deg,var(--accent-dim),var(--accent)); transition:width .25s ease;}
+
+  #navGrid{display:grid; grid-template-columns:repeat(6,1fr); gap:5px; overflow-y:auto; max-height:180px;}
+  .navBtn{
+    aspect-ratio:1/1; border:1px solid var(--line); background:var(--panel-2); color:var(--dim);
+    font-family:var(--mono); font-size:10.5px; border-radius:6px; position:relative;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    transition:all .15s ease;
+  }
+  .navBtn:hover{border-color:var(--accent); color:var(--text);}
+  .navBtn.picked{background:rgba(240,182,76,0.1); color:var(--amber); border-color:rgba(240,182,76,0.4);}
+  .navBtn.current{outline:2px solid var(--accent); outline-offset:1px;}
+  .navBtn.correct{background:rgba(57,217,138,0.18); color:var(--accent); border-color:var(--accent);}
+  .navBtn.incorrect{background:rgba(255,107,107,0.15); color:var(--bad); border-color:var(--bad);}
+  .navBtn .bmDot{position:absolute; top:1px; right:1px; width:5px; height:5px; border-radius:50%; background:var(--amber);}
+
+  .sideActionBtn{
+    background:var(--panel-2); color:var(--text); border:1px solid var(--line);
+    font-family:var(--mono); font-weight:600; font-size:11.5px; letter-spacing:.02em;
+    padding:9px; border-radius:8px; cursor:pointer; text-transform:uppercase; width:100%;
+  }
+  .sideActionBtn:hover{border-color:var(--accent); color:var(--accent);}
+  .sideActionBtn.primary{background:var(--accent); color:#0a1510; border:none;}
+  .sideActionBtn.primary:hover{filter:brightness(1.08); color:#0a1510;}
+
+  #validationBanner{
+    display:none; background:rgba(255,107,107,0.08); border:1px solid var(--bad-dim);
+    color:var(--bad); font-family:var(--mono); font-size:11px; border-radius:8px; padding:8px 10px;
+    max-height:120px; overflow-y:auto; white-space:pre-wrap;
+  }
+
+  /* ---------- Main ---------- */
+  #main{flex:1; padding:32px 44px 70px; max-width:920px; margin:0 auto; min-width:0;}
+  .topBar{display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;}
+  .topBar h1{font-size:18px; margin:0; font-family:var(--mono);}
+  .panelTabs{display:flex; gap:6px;}
+  .panelTab{
+    padding:7px 14px; border-radius:20px; border:1px solid var(--line); background:var(--panel-2);
+    color:var(--dim); font-family:var(--mono); font-size:11.5px; cursor:pointer;
+  }
+  .panelTab.active{background:rgba(90,169,230,0.12); color:var(--blue); border-color:var(--blue);}
+
+  .qMeta{font-family:var(--mono); font-size:12px; color:var(--dim); display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;}
+  .qMeta .tags{display:flex; gap:6px; flex-wrap:wrap;}
+  .qMeta .tag{border:1px solid var(--line); padding:2px 8px; border-radius:20px;}
+  .tag.difficulty-Easy{color:var(--accent);}
+  .tag.difficulty-Medium{color:var(--amber);}
+  .tag.difficulty-Hard{color:var(--bad);}
+  #bookmarkBtn{
+    border:1px solid var(--line); background:var(--panel-2); color:var(--dim);
+    border-radius:6px; padding:5px 10px; cursor:pointer; font-family:var(--mono); font-size:12px;
+  }
+  #bookmarkBtn.on{color:var(--amber); border-color:var(--amber); background:rgba(240,182,76,0.1);}
+
+  .qStem{font-size:16.5px; line-height:1.6; white-space:pre-wrap; margin-bottom:14px;}
+  pre.code{
+    background:#0a0f16; border:1px solid var(--line); border-left:3px solid var(--accent-dim);
+    border-radius:6px; padding:16px 18px; font-family:var(--mono); font-size:13px;
+    line-height:1.6; overflow-x:auto; color:#b9e6cd; margin:0 0 16px; white-space:pre-wrap;
+  }
+  pre.code.solution{border-left-color:var(--accent);}
+  .solutionLabel{font-family:var(--mono); font-size:11px; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; margin:14px 0 6px;}
+  .hint{font-family:var(--mono); font-size:11.5px; color:var(--dim); margin:-6px 0 14px;}
+
+  .choiceList{display:flex; flex-direction:column; gap:8px; margin-bottom:16px;}
+  .choice{
+    display:flex; gap:12px; align-items:flex-start; background:var(--panel);
+    border:1px solid var(--line); border-radius:8px; padding:12px 14px; cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .choice:hover{border-color:var(--accent-dim);}
+  .choice input{margin-top:3px; accent-color:var(--accent);}
+  .choice .letter{font-family:var(--mono); color:var(--dim); font-size:12px; min-width:16px;}
+  .choice .txt{white-space:pre-wrap; font-size:14.5px; line-height:1.5;}
+  .choice.selected{border-color:var(--accent); background:rgba(57,217,138,0.06);}
+  .choice.showCorrect{border-color:var(--accent); background:rgba(57,217,138,0.14);}
+  .choice.showWrong{border-color:var(--bad); background:rgba(255,107,107,0.1);}
+  .choice.locked{cursor:default;}
+
+  input.blankInput{
+    background:#0d1520; color:var(--amber); border:1px solid var(--line); border-bottom:2px solid var(--blue);
+    border-radius:4px; padding:2px 6px; font-family:var(--mono); font-size:13px; min-width:70px;
+    width:auto; margin:0 2px;
+  }
+  input.blankInput:focus{outline:none; border-color:var(--accent);}
+  span.blankResult{padding:2px 6px; border-radius:4px; font-family:var(--mono); font-size:13px; margin:0 2px; display:inline-block;}
+  span.blankResult.ok{background:rgba(57,217,138,0.18); color:var(--accent);}
+  span.blankResult.bad{background:rgba(255,107,107,0.15); color:var(--bad); text-decoration:line-through;}
+  span.blankCorrectHint{color:var(--accent); font-size:12px; margin-left:4px;}
+
+  #actionRow{display:flex; gap:10px; margin-bottom:8px; flex-wrap:wrap;}
+  #actionRow button{
+    font-family:var(--mono); font-size:13px; font-weight:700; letter-spacing:.02em;
+    padding:10px 20px; border-radius:8px; border:none;
+    background:var(--accent); color:#0a1510; cursor:pointer; text-transform:uppercase;
+  }
+  #actionRow button:hover{filter:brightness(1.08);}
+  #actionRow button:disabled{opacity:.35; cursor:not-allowed; filter:none;}
+  #actionRow button.secondary{background:var(--panel-2); color:var(--text); border:1px solid var(--line);}
+  #actionRow button.secondary:hover{border-color:var(--accent); color:var(--accent); filter:none;}
+  #actionRow button.warn{background:var(--amber); color:#221a05;}
+
+  #feedbackBox{margin-top:4px; margin-bottom:12px; padding:12px 14px; border-radius:8px; font-family:var(--mono); font-size:13px; display:none;}
+  #feedbackBox.ok{display:block; background:rgba(57,217,138,0.1); border:1px solid var(--accent-dim); color:var(--accent);}
+  #feedbackBox.bad{display:block; background:rgba(255,107,107,0.08); border:1px solid var(--bad-dim); color:var(--bad);}
+  #feedbackBox .partial{color:var(--amber); font-family:var(--mono); font-size:12px; margin-top:6px;}
+  #feedbackBox .expl{color:var(--text); font-family:var(--sans); font-size:13.5px; margin-top:8px; line-height:1.5;}
+
+  .navRow{display:flex; justify-content:space-between; margin-top:22px; gap:12px;}
+  .navRow button{
+    font-family:var(--mono); font-size:13px; padding:11px 20px; border-radius:8px;
+    border:1px solid var(--line); background:var(--panel-2); color:var(--text); cursor:pointer;
+  }
+  .navRow button:hover{border-color:var(--accent);}
+  .navRow button:disabled{opacity:.35; cursor:not-allowed;}
+
+  /* ---------- Results / Review / History ---------- */
+  #resultsScreen, #historyScreen, #reviewScreen{display:none;}
+  .scoreCard{text-align:center; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:40px 28px; margin-bottom:20px;}
+  .scoreCard .big{font-family:var(--mono); font-size:56px; font-weight:700; color:var(--accent);}
+  .scoreCard .sub{color:var(--dim); font-family:var(--mono); font-size:13px; margin-top:6px;}
+  .scoreCard .sub2{color:var(--amber); font-family:var(--mono); font-size:12px; margin-top:6px;}
+  .topicBreakdown{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin-bottom:20px;}
+  .topicBreakdown h3{margin:0 0 10px; font-family:var(--mono); font-size:12px; text-transform:uppercase; color:var(--dim);}
+  .topicRow{display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:13px;}
+  .topicRow .tname{flex:0 0 210px; color:var(--text);}
+  .topicBar{flex:1; height:8px; background:#0a0f16; border:1px solid var(--line); border-radius:4px; overflow:hidden;}
+  .topicBar>div{height:100%; background:linear-gradient(90deg,var(--accent-dim),var(--accent));}
+  .topicRow .tscore{width:52px; text-align:right; font-family:var(--mono); color:var(--dim); font-size:12px;}
+
+  .resultsGrid{display:grid; grid-template-columns:repeat(10,1fr); gap:6px; margin-bottom:20px;}
+  .rBox{
+    aspect-ratio:1/1; border-radius:5px; font-family:var(--mono); font-size:11px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid var(--line);
+  }
+  .rBox.correct{background:rgba(57,217,138,0.18); color:var(--accent); border-color:var(--accent);}
+  .rBox.incorrect{background:rgba(255,107,107,0.15); color:var(--bad); border-color:var(--bad);}
+  .rBox.unattempted{background:var(--panel-2); color:var(--dim); border-color:var(--line);}
+
+  .filterRow{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;}
+  .filterRow button{
+    font-family:var(--mono); font-size:12px; padding:8px 14px; border-radius:20px;
+    border:1px solid var(--line); background:var(--panel-2); color:var(--text); cursor:pointer;
+  }
+  .filterRow button.active{background:rgba(90,169,230,0.14); color:var(--blue); border-color:var(--blue);}
+
+  .actionsRow{display:flex; gap:12px; justify-content:center; flex-wrap:wrap;}
+  .actionsRow button{
+    font-family:var(--mono); font-size:13px; padding:12px 22px; border-radius:8px;
+    border:1px solid var(--line); background:var(--panel-2); color:var(--text); cursor:pointer;
+  }
+  .actionsRow button.primary{background:var(--accent); color:#0a1510; border:none; font-weight:700;}
+  .actionsRow button:hover{border-color:var(--accent);}
+
+  .reviewList{display:flex; flex-direction:column; gap:6px;}
+  .reviewItem{
+    background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px 14px;
+    cursor:pointer; font-size:13.5px; display:flex; justify-content:space-between; gap:10px;
+  }
+  .reviewItem:hover{border-color:var(--accent);}
+  .reviewItem .rstat{font-family:var(--mono); font-size:11px; flex:0 0 auto;}
+  .reviewItem .rstat.correct{color:var(--accent);}
+  .reviewItem .rstat.incorrect{color:var(--bad);}
+  .reviewItem .rstat.unattempted{color:var(--dim);}
+
+  .historyItem{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin-bottom:10px; font-size:13px;}
+  .historyItem .hTop{display:flex; justify-content:space-between; font-family:var(--mono); color:var(--dim); margin-bottom:6px; gap:10px; flex-wrap:wrap;}
+  .historyItem .hScore{color:var(--accent); font-weight:700;}
+
+  @media(max-width:860px){
+    body{flex-direction:column;}
+    #sidebar{position:relative; width:100%; height:auto; flex:none;}
+    #main{padding:20px 16px 50px;}
+    .resultsGrid{grid-template-columns:repeat(6,1fr);}
+    .topicRow{flex-wrap:wrap;}
+    .topicRow .tname{flex:0 0 110px; font-size:12px;}
+    .qStem{font-size:15.5px;}
+    pre.code{font-size:12px; padding:12px 12px;}
+  }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div>
+    <div class="brand">// programming_graphics.py</div>
+    <div class="brand-sub">Programming Graphics Reviewer</div>
+  </div>
+
+  <div class="sideBlock">
+    <label for="setSelect">Question Set</label>
+    <select id="setSelect" class="sideSelect"></select>
+  </div>
+
+  <div class="sideBlock">
+    <label>Mode</label>
+    <div id="modeTabs">
+      <div class="modeTab" data-mode="study">Study</div>
+      <div class="modeTab" data-mode="practice">Practice</div>
+      <div class="modeTab" data-mode="exam">Exam</div>
+    </div>
+  </div>
+
+  <div class="sideBlock">
+    <label>Settings</label>
+    <div class="toggleRow">
+      <span>Shuffle Questions</span>
+      <label class="switch"><input type="checkbox" id="shuffleQToggle"><span class="slider"></span></label>
+    </div>
+    <div class="toggleRow">
+      <span>Shuffle Options</span>
+      <label class="switch"><input type="checkbox" id="shuffleOToggle"><span class="slider"></span></label>
+    </div>
+  </div>
+
+  <div class="sideBlock" id="scoreWrap">
+    <div class="row"><span>ATTEMPTED</span><span class="val" id="attemptedText">0 / 0</span></div>
+    <div class="row"><span>CORRECT</span><span class="val" id="correctText">0</span></div>
+    <div class="row"><span>BOOKMARKED</span><span class="val" id="bookmarkedText">0</span></div>
+    <div id="progressBarOuter"><div id="progressBarInner"></div></div>
+  </div>
+
+  <div id="navGrid"></div>
+
+  <button class="sideActionBtn" id="reviewSideBtn">🔍 Review Questions</button>
+  <button class="sideActionBtn" id="historySideBtn">📜 Attempt History</button>
+  <button class="sideActionBtn primary" id="resetSideBtn">↺ Reset Session</button>
+
+  <div id="validationBanner"></div>
+</div>
+
+<div id="main">
+
+  <div id="quizScreen">
+    <div class="topBar">
+      <h1 id="setTitle">Module 1</h1>
+    </div>
+
+    <div class="qMeta">
+      <span id="qCounter">Question 1 / 10</span>
+      <div class="tags">
+        <span class="tag" id="qTypeTag">SINGLE</span>
+        <span class="tag" id="qDiffTag">Easy</span>
+        <span class="tag" id="qTopicTag">Topic</span>
+      </div>
+      <button id="bookmarkBtn">☆ Bookmark</button>
+    </div>
+
+    <div class="qStem" id="qStem"></div>
+    <div id="qBody"></div>
+
+    <div id="actionRow">
+      <button id="submitBtn" disabled>Submit Answer</button>
+      <button id="tryAgainBtn" class="warn" style="display:none;">Try Again</button>
+      <button id="finishBtn" class="secondary" style="display:none;">Finish &amp; Score</button>
+    </div>
+    <div id="feedbackBox"></div>
+    <div id="solutionBox"></div>
+
+    <div class="navRow">
+      <button id="prevBtn">◂ Previous</button>
+      <button id="nextBtn">Next ▸</button>
+    </div>
+  </div>
+
+  <div id="resultsScreen">
+    <div class="scoreCard">
+      <div class="big" id="scoreBig">0%</div>
+      <div class="sub" id="scoreSub">0 of 0 correct</div>
+      <div class="sub2" id="scoreWarn"></div>
+    </div>
+    <div class="topicBreakdown" id="topicBreakdown"></div>
+    <div class="resultsGrid" id="resultsGrid"></div>
+    <div class="actionsRow">
+      <button class="primary" id="retryIncorrectBtn">Retry Incorrect</button>
+      <button id="backToQuizBtn">Back to Quiz</button>
+      <button id="retakeBtn">Retake Full Set</button>
+    </div>
+  </div>
+
+  <div id="reviewScreen">
+    <div class="topBar"><h1>Review Questions</h1><button class="panelTab" id="closeReviewBtn">✕ Close</button></div>
+    <div class="filterRow">
+      <button data-f="incorrect" class="active">Incorrect</button>
+      <button data-f="unanswered">Unanswered</button>
+      <button data-f="bookmarked">Bookmarked</button>
+      <button data-f="all">All</button>
+    </div>
+    <div class="reviewList" id="reviewList"></div>
+  </div>
+
+  <div id="historyScreen">
+    <div class="topBar"><h1>Attempt History</h1><button class="panelTab" id="closeHistoryBtn">✕ Close</button></div>
+    <div id="historyList"></div>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================================
+   QUESTION DATA
+   Module 1 — Introduction to OpenGL and the Rendering Pipeline
+   Module 2 — Geometric Primitives and Attributes
+   Diagnostic Test — Programming Graphics
+========================================================================= */
+const QUESTION_SETS = {
+
+"module1": {
+  title: "Module 1 — Introduction to OpenGL and the Rendering Pipeline",
+  questions: [
+
+// ---- OpenGL Fundamentals ----
+{id:"m1-fund-1", type:"single", topic:"OpenGL Fundamentals", difficulty:"Easy", source:"Module 1",
+ stem:`What is OpenGL?`,
+ opts:[["A",`A word-processing file format`],
+       ["B",`A computer-graphics rendering API for generating high-quality color images from geometric and image primitives`],
+       ["C",`A programming language exclusive to Silicon Graphics hardware`],
+       ["D",`A database query language`]], ans:"B",
+ explanation:`OpenGL is a computer-graphics rendering API used to generate high-quality color images from geometric and image primitives.`},
+
+{id:"m1-fund-2", type:"single", topic:"OpenGL Fundamentals", difficulty:"Easy", source:"Module 1",
+ stem:`Where was OpenGL originally developed?`,
+ opts:[["A",`Microsoft`],["B",`Silicon Graphics (SGI)`],["C",`Khronos Group`],["D",`Apple`]], ans:"B",
+ explanation:`OpenGL was first developed at Silicon Graphics, or SGI.`},
+
+{id:"m1-fund-3", type:"single", topic:"OpenGL Fundamentals", difficulty:"Easy", source:"Module 1",
+ stem:`In what year was OpenGL version 1.0 released?`,
+ opts:[["A",`1989`],["B",`1994`],["C",`2001`],["D",`2010`]], ans:"B",
+ explanation:`OpenGL version 1.0 was released in 1994.`},
+
+{id:"m1-fund-4", type:"single", topic:"OpenGL Fundamentals", difficulty:"Easy", source:"Module 1",
+ stem:`OpenGL is an object-oriented API.`,
+ opts:[["A",`True`],["B",`False`]], ans:"B",
+ explanation:`OpenGL is not object-oriented.`},
+
+{id:"m1-fund-5", type:"single", topic:"OpenGL Fundamentals", difficulty:"Medium", source:"Module 1",
+ stem:`In OpenGL's client-server model, what role does the application play?`,
+ opts:[["A",`Server`],["B",`Client`],["C",`Both client and server simultaneously`],["D",`Neither — OpenGL has no client-server model`]], ans:"B",
+ explanation:`OpenGL uses a client-server model where the application is the client and the vendor's OpenGL implementation is the server.`},
+
+{id:"m1-fund-6", type:"single", topic:"OpenGL Fundamentals", difficulty:"Medium", source:"Module 1",
+ stem:`In OpenGL's client-server model, what role does the vendor's OpenGL implementation play?`,
+ opts:[["A",`Client`],["B",`Server`],["C",`Neither`],["D",`Compiler`]], ans:"B",
+ explanation:`The vendor's OpenGL implementation acts as the server in the client-server model.`},
+
+{id:"m1-fund-7", type:"single", topic:"OpenGL Fundamentals", difficulty:"Medium", source:"Module 1",
+ stem:`Which statement best describes the independence of OpenGL's graphics portion?`,
+ opts:[["A",`It requires a specific operating system to run`],
+       ["B",`It can be operating-system independent and window-system independent`],
+       ["C",`It only runs inside a web browser`],
+       ["D",`It depends entirely on the windowing toolkit used`]], ans:"B",
+ explanation:`The graphics portion of an OpenGL application can be both operating-system independent and window-system independent.`},
+
+// ---- Khronos Ecosystem ----
+{id:"m1-khronos-1", type:"single", topic:"Khronos Ecosystem", difficulty:"Easy", source:"Module 1",
+ stem:`What is The Khronos Group?`,
+ opts:[["A",`A single hardware vendor`],
+       ["B",`An industry consortium that develops and manages open, royalty-free standards`],
+       ["C",`A government regulatory agency`],
+       ["D",`A proprietary game engine`]], ans:"B",
+ explanation:`The Khronos Group is an industry consortium that develops and manages the open, royalty-free standards in the Khronos Visual Computing Ecosystem.`},
+
+{id:"m1-khronos-2", type:"single", topic:"Khronos Ecosystem", difficulty:"Medium", source:"Module 1",
+ stem:`Which of the following is part of the Khronos Visual Computing Ecosystem?`,
+ opts:[["A",`DirectX`],["B",`OpenGL`],["C",`Metal`],["D",`XNA`]], ans:"B",
+ explanation:`OpenGL is one of the standards managed by The Khronos Group. DirectX, Metal, and XNA are managed by other vendors, not Khronos.`},
+
+{id:"m1-khronos-3", type:"single", topic:"Khronos Ecosystem", difficulty:"Medium", source:"Module 1",
+ stem:`Which Khronos-managed standard is primarily focused on parallel computing?`,
+ opts:[["A",`OpenCL`],["B",`OpenGL`],["C",`WebGL`],["D",`Vulkan`]], ans:"A",
+ explanation:`OpenCL is the Khronos standard focused on parallel computing across CPUs, GPUs, and other processors.`},
+
+{id:"m1-khronos-4", type:"single", topic:"Khronos Ecosystem", difficulty:"Medium", source:"Module 1",
+ stem:`Which application area is NOT typically supported by Khronos standards?`,
+ opts:[["A",`3D graphics`],["B",`Virtual and augmented reality`],["C",`Neural networks and computer vision`],["D",`Word processing`]], ans:"D",
+ explanation:`Khronos standards support areas such as 3D graphics, parallel computing, VR/AR, neural networks, and computer vision — not word processing.`},
+
+{id:"m1-khronos-5", type:"single", topic:"Khronos Ecosystem", difficulty:"Easy", source:"Module 1",
+ stem:`What do Khronos standards primarily aim to promote?`,
+ opts:[["A",`Vendor lock-in and proprietary licensing`],
+       ["B",`Hardware acceleration and cross-platform compatibility`],
+       ["C",`Manual memory management only`],
+       ["D",`Single-platform optimization exclusively for one OS`]], ans:"B",
+ explanation:`Khronos standards promote hardware acceleration and cross-platform compatibility across devices and vendors.`},
+
+// ---- Rendering Pipeline ----
+{id:"m1-pipeline-1", type:"single", topic:"Rendering Pipeline", difficulty:"Easy", source:"Module 1",
+ stem:`What is the rendering pipeline?`,
+ opts:[["A",`A single function that draws an image instantly`],
+       ["B",`A sequence of stages that converts 3D scene data into a 2D image displayed on the screen`],
+       ["C",`A storage format for texture files`],
+       ["D",`A debugging tool for shader code`]], ans:"B",
+ explanation:`The rendering pipeline is a sequence of stages that converts 3D scene data into the final 2D image shown on screen.`},
+
+{id:"m1-pipeline-2", type:"single", topic:"Rendering Pipeline", difficulty:"Medium", source:"Module 1",
+ stem:`Which statement best distinguishes fixed-function stages from programmable stages in the pipeline?`,
+ opts:[["A",`Fixed-function stages are controlled by OpenGL itself; programmable stages run developer-written shaders`],
+       ["B",`Programmable stages are controlled by OpenGL itself; fixed-function stages run developer-written shaders`],
+       ["C",`Both types of stages run developer-written shaders`],
+       ["D",`Neither type of stage can be customized`]], ans:"A",
+ explanation:`Fixed-function stages are controlled directly by OpenGL, while programmable stages let developers write their own shader code.`},
+
+{id:"m1-pipeline-3", type:"single", topic:"Rendering Pipeline", difficulty:"Hard", source:"Module 1",
+ stem:`Which of the following lists the OpenGL rendering pipeline stages in the correct order?`,
+ opts:[["A",`Vertex Shader → Vertex Specification → Rasterization → Primitive Assembly → Fragment Shader → Per-Sample Operations`],
+       ["B",`Vertex Specification → Vertex Shader → Primitive Assembly → Geometry Shader (optional) → Rasterization → Fragment Shader → Per-Sample Operations`],
+       ["C",`Rasterization → Vertex Specification → Vertex Shader → Fragment Shader → Primitive Assembly → Per-Sample Operations`],
+       ["D",`Per-Sample Operations → Fragment Shader → Rasterization → Primitive Assembly → Vertex Shader → Vertex Specification`]], ans:"B",
+ explanation:`The correct order is Vertex Specification, Vertex Shader, Primitive Assembly, the optional Geometry Shader, Rasterization, Fragment Shader, then Per-Sample Operations.`},
+
+{id:"m1-pipeline-4", type:"single", topic:"Rendering Pipeline", difficulty:"Medium", source:"Module 1",
+ stem:`Which stage is the first programmable stage in the rendering pipeline?`,
+ opts:[["A",`Vertex Specification`],["B",`Vertex Shader`],["C",`Rasterization`],["D",`Per-Sample Operations`]], ans:"B",
+ explanation:`The Vertex Shader is the first programmable stage in the pipeline.`},
+
+{id:"m1-pipeline-5", type:"single", topic:"Rendering Pipeline", difficulty:"Medium", source:"Module 1",
+ stem:`Which stage groups processed vertices into primitives such as points, lines, and triangles?`,
+ opts:[["A",`Vertex Shader`],["B",`Primitive Assembly`],["C",`Fragment Shader`],["D",`Rasterization`]], ans:"B",
+ explanation:`Primitive Assembly groups vertices into primitives according to the drawing mode selected.`},
+
+{id:"m1-pipeline-6", type:"single", topic:"Rendering Pipeline", difficulty:"Medium", source:"Module 1",
+ stem:`Which fixed-function stage converts primitives into fragments?`,
+ opts:[["A",`Rasterization`],["B",`Vertex Shader`],["C",`Primitive Assembly`],["D",`Geometry Shader`]], ans:"A",
+ explanation:`Rasterization is the fixed-function stage that converts primitives into fragments and clips off-screen portions.`},
+
+{id:"m1-pipeline-7", type:"single", topic:"Rendering Pipeline", difficulty:"Medium", source:"Module 1",
+ stem:`Which stage determines the final color of each fragment, potentially including per-pixel lighting and texturing?`,
+ opts:[["A",`Vertex Shader`],["B",`Primitive Assembly`],["C",`Fragment Shader`],["D",`Vertex Specification`]], ans:"C",
+ explanation:`The Fragment Shader determines fragment colors and can perform per-pixel lighting and texturing calculations.`},
+
+{id:"m1-pipeline-8", type:"single", topic:"Rendering Pipeline", difficulty:"Medium", source:"Module 1",
+ stem:`Which stage is optional and can modify existing primitives or generate new ones?`,
+ opts:[["A",`Geometry Shader`],["B",`Rasterization`],["C",`Per-Sample Operations`],["D",`Vertex Specification`]], ans:"A",
+ explanation:`The Geometry Shader is an optional programmable stage used for procedural geometry and advanced effects.`},
+
+{id:"m1-pipeline-9", type:"single", topic:"Rendering Pipeline", difficulty:"Medium", source:"Module 1",
+ stem:`Which stage performs depth testing, stencil testing, blending, and scissoring before the final color is written to the framebuffer?`,
+ opts:[["A",`Vertex Shader`],["B",`Primitive Assembly`],["C",`Per-Sample Operations`],["D",`Rasterization`]], ans:"C",
+ explanation:`Per-Sample Operations include depth testing, stencil testing, blending, and scissoring.`},
+
+{id:"m1-pipeline-10", type:"single", topic:"Rendering Pipeline", difficulty:"Hard", source:"Module 1",
+ stem:`Why does clipping during rasterization improve rendering efficiency?`,
+ opts:[["A",`It increases the total number of fragments generated`],
+       ["B",`It avoids unnecessary processing of content that falls outside the viewing region`],
+       ["C",`It forces every pixel on screen to be recalculated twice`],
+       ["D",`It disables the fragment shader entirely`]], ans:"B",
+ explanation:`Clipping avoids unnecessary work by discarding portions of primitives that fall outside the visible viewing region.`},
+
+{id:"m1-pipeline-11", type:"single", topic:"Rendering Pipeline", difficulty:"Hard", source:"Module 1",
+ stem:`Which statement best distinguishes vertex processing from fragment processing in the pipeline?`,
+ opts:[["A",`Vertex processing works per-pixel; fragment processing works per-vertex`],
+       ["B",`Vertex processing transforms geometry per vertex; fragment processing computes color per pixel/fragment`],
+       ["C",`Both stages perform identical operations on identical data`],
+       ["D",`Fragment processing happens before vertex processing in the pipeline`]], ans:"B",
+ explanation:`Vertex processing (Vertex Shader) transforms geometry on a per-vertex basis, while fragment processing (Fragment Shader) computes color on a per-pixel/fragment basis, later in the pipeline.`},
+
+{id:"m1-pipeline-12", type:"single", topic:"Rendering Pipeline", difficulty:"Medium", source:"Module 1",
+ stem:`Which stage commonly relies on Vertex Buffer Objects and Vertex Array Objects to organize vertex data in memory?`,
+ opts:[["A",`Vertex Specification`],["B",`Fragment Shader`],["C",`Per-Sample Operations`],["D",`Rasterization`]], ans:"A",
+ explanation:`Vertex Specification defines and organizes vertex data in memory, commonly using Vertex Buffer Objects and Vertex Array Objects.`},
+
+// ---- GLUT Program Structure (code reading) ----
+{id:"m1-glut-1", type:"single", topic:"GLUT Program Structure", difficulty:"Easy", source:"Module 1",
+ stem:`In the following program, what must be called before any other GLUT or OpenGL function?
+
+#include <iostream>
+#include <GL/glut.h>
+using namespace std;
+
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glBegin(GL_POLYGON);
+    glVertex2f(-0.5f, -0.5f);
+    glVertex2f(-0.5f,  0.5f);
+    glVertex2f( 0.5f,  0.5f);
+    glVertex2f( 0.5f, -0.5f);
+    glEnd();
+    glFlush();
+}
+
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutCreateWindow("simple");
+    glutDisplayFunc(display);
+    glutMainLoop();
+}`,
+ opts:[["A",`glutCreateWindow("simple")`],["B",`glutInit(&argc, argv)`],["C",`glutDisplayFunc(display)`],["D",`glutMainLoop()`]], ans:"B",
+ explanation:`glutInit(&argc, argv) initializes GLUT and must be called before any other GLUT or OpenGL function.`},
+
+{id:"m1-glut-2", type:"single", topic:"GLUT Program Structure", difficulty:"Medium", source:"Module 1",
+ stem:`In the simple GLUT program shown earlier, what does glutDisplayFunc(display) do?`,
+ opts:[["A",`It immediately draws the polygon once and exits`],
+       ["B",`It registers display as the callback function invoked whenever the window needs to be redrawn`],
+       ["C",`It creates the application window`],
+       ["D",`It sets the background color of the window`]], ans:"B",
+ explanation:`glutDisplayFunc(display) registers display as the display callback, which is invoked whenever the window must be redrawn.`},
+
+{id:"m1-glut-3", type:"single", topic:"GLUT Program Structure", difficulty:"Medium", source:"Module 1",
+ stem:`When is the display callback registered by glutDisplayFunc invoked?`,
+ opts:[["A",`Only once, immediately after glutInit is called`],
+       ["B",`Whenever the window must be redrawn`],
+       ["C",`Only when the program exits`],
+       ["D",`Every time the mouse moves, regardless of the window state`]], ans:"B",
+ explanation:`The display callback is invoked whenever the window needs to be redrawn.`},
+
+{id:"m1-glut-4", type:"single", topic:"GLUT Program Structure", difficulty:"Medium", source:"Module 1",
+ stem:`Why should glutMainLoop() be the last statement in main()?`,
+ opts:[["A",`Because it deallocates all OpenGL resources`],
+       ["B",`Because it starts an infinite event-processing loop that does not return`],
+       ["C",`Because C++ requires the last statement in main to be a function call`],
+       ["D",`It has no particular reason and could be placed anywhere`]], ans:"B",
+ explanation:`glutMainLoop() starts an infinite event-processing loop, so any code after it would never execute.`},
+
+{id:"m1-glut-5", type:"single", topic:"GLUT Program Structure", difficulty:"Easy", source:"Module 1",
+ stem:`What does glClear(GL_COLOR_BUFFER_BIT) do at the start of display()?`,
+ opts:[["A",`It clears the color buffer`],["B",`It closes the window`],["C",`It flushes command execution`],["D",`It creates a new vertex list`]], ans:"A",
+ explanation:`glClear(GL_COLOR_BUFFER_BIT) clears the color buffer before new content is drawn.`},
+
+{id:"m1-glut-6", type:"single", topic:"GLUT Program Structure", difficulty:"Medium", source:"Module 1",
+ stem:`Given four glVertex2f calls at (-0.5,-0.5), (-0.5,0.5), (0.5,0.5), (0.5,-0.5) between glBegin(GL_POLYGON) and glEnd(), what shape does the program draw?`,
+ opts:[["A",`A single point`],["B",`A filled square (a four-sided polygon)`],["C",`A triangle`],["D",`Two separate line segments`]], ans:"B",
+ explanation:`Four vertices at the corners (-0.5,-0.5), (-0.5,0.5), (0.5,0.5), (0.5,-0.5) form a filled square using GL_POLYGON.`},
+
+// ---- Code-blank questions ----
+{id:"m1-code-1", type:"code_blank", topic:"GLUT Program Structure", difficulty:"Medium", source:"Module 1 code sample",
+ stem:`Complete the missing header include for GLUT.`,
+ code:`#include <iostream>
+__BLANK_1__
+using namespace std;
+
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutCreateWindow("simple");
+    glutDisplayFunc(display);
+    glutMainLoop();
+}`,
+ blanks:[{id:1, answer:`#include <GL/glut.h>`, accepted:[`#include<GL/glut.h>`], caseSensitive:true}],
+ explanation:`The GLUT header must be included so glut* functions are declared.`},
+
+{id:"m1-code-2", type:"code_blank", topic:"GLUT Program Structure", difficulty:"Easy", source:"Module 1 code sample",
+ stem:`Complete the missing statement that clears the color buffer.`,
+ code:`void display() {
+    __BLANK_1__
+    glBegin(GL_POLYGON);
+    glVertex2f(-0.5f, -0.5f);
+    glVertex2f(-0.5f,  0.5f);
+    glVertex2f( 0.5f,  0.5f);
+    glVertex2f( 0.5f, -0.5f);
+    glEnd();
+    glFlush();
+}`,
+ blanks:[{id:1, answer:`glClear(GL_COLOR_BUFFER_BIT);`, accepted:[`glClear(GL_COLOR_BUFFER_BIT)`], caseSensitive:true}],
+ explanation:`glClear(GL_COLOR_BUFFER_BIT) clears the color buffer before drawing.`},
+
+{id:"m1-code-3", type:"code_blank", topic:"GLUT Program Structure", difficulty:"Medium", source:"Module 1 code sample",
+ stem:`Complete the missing statement that begins the vertex list for a filled polygon.`,
+ code:`void display() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    __BLANK_1__
+    glVertex2f(-0.5f, -0.5f);
+    glVertex2f(-0.5f,  0.5f);
+    glVertex2f( 0.5f,  0.5f);
+    glVertex2f( 0.5f, -0.5f);
+    glEnd();
+    glFlush();
+}`,
+ blanks:[{id:1, answer:`glBegin(GL_POLYGON);`, accepted:[`glBegin(GL_POLYGON)`], caseSensitive:true}],
+ explanation:`glBegin(GL_POLYGON) begins the vertex list for a filled convex polygon.`},
+
+{id:"m1-code-4", type:"code_blank", topic:"GLUT Program Structure", difficulty:"Easy", source:"Module 1 code sample",
+ stem:`Complete the missing first vertex of the polygon.`,
+ code:`void display() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glBegin(GL_POLYGON);
+    __BLANK_1__
+    glVertex2f(-0.5f,  0.5f);
+    glVertex2f( 0.5f,  0.5f);
+    glVertex2f( 0.5f, -0.5f);
+    glEnd();
+    glFlush();
+}`,
+ blanks:[{id:1, answer:`glVertex2f(-0.5f, -0.5f);`, accepted:[`glVertex2f(-0.5f,-0.5f);`,`glVertex2f(-0.5f, -0.5f)`,`glVertex2f(-0.5,-0.5);`,`glVertex2f(-0.5, -0.5);`], caseSensitive:true}],
+ explanation:`glVertex2f(x, y) specifies a two-dimensional vertex; the first corner here is (-0.5, -0.5).`},
+
+{id:"m1-code-5", type:"code_blank", topic:"GLUT Program Structure", difficulty:"Easy", source:"Module 1 code sample",
+ stem:`Complete the missing statement that ends the vertex list.`,
+ code:`void display() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glBegin(GL_POLYGON);
+    glVertex2f(-0.5f, -0.5f);
+    glVertex2f(-0.5f,  0.5f);
+    glVertex2f( 0.5f,  0.5f);
+    glVertex2f( 0.5f, -0.5f);
+    __BLANK_1__
+    glFlush();
+}`,
+ blanks:[{id:1, answer:`glEnd();`, accepted:[`glEnd()`], caseSensitive:true}],
+ explanation:`glEnd() ends the vertex list started by glBegin.`},
+
+{id:"m1-code-6", type:"code_blank", topic:"GLUT Program Structure", difficulty:"Easy", source:"Module 1 code sample",
+ stem:`Complete the missing statement that forces buffered OpenGL commands to execute.`,
+ code:`void display() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glBegin(GL_POLYGON);
+    glVertex2f(-0.5f, -0.5f);
+    glVertex2f(-0.5f,  0.5f);
+    glVertex2f( 0.5f,  0.5f);
+    glVertex2f( 0.5f, -0.5f);
+    glEnd();
+    __BLANK_1__
+}`,
+ blanks:[{id:1, answer:`glFlush();`, accepted:[`glFlush()`], caseSensitive:true}],
+ explanation:`glFlush() forces previously buffered OpenGL commands to execute.`},
+
+{id:"m1-code-7", type:"code_blank", topic:"GLUT Program Structure", difficulty:"Medium", source:"Module 1 code sample",
+ stem:`Complete the two missing statements that initialize GLUT and create the window.`,
+ code:`int main(int argc, char** argv) {
+    __BLANK_1__
+    __BLANK_2__
+    glutDisplayFunc(display);
+    glutMainLoop();
+}`,
+ blanks:[
+   {id:1, answer:`glutInit(&argc, argv);`, accepted:[`glutInit(&argc,argv);`,`glutInit(&argc, argv)`], caseSensitive:true},
+   {id:2, answer:`glutCreateWindow("simple");`, accepted:[`glutCreateWindow("simple")`], caseSensitive:true}
+ ],
+ explanation:`glutInit initializes GLUT first, then glutCreateWindow("simple") creates the window titled "simple".`},
+
+{id:"m1-code-8", type:"code_blank", topic:"GLUT Program Structure", difficulty:"Medium", source:"Module 1 code sample",
+ stem:`Complete the two missing statements that register the display callback and start the event loop.`,
+ code:`int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutCreateWindow("simple");
+    __BLANK_1__
+    __BLANK_2__
+}`,
+ blanks:[
+   {id:1, answer:`glutDisplayFunc(display);`, accepted:[`glutDisplayFunc(display)`], caseSensitive:true},
+   {id:2, answer:`glutMainLoop();`, accepted:[`glutMainLoop()`], caseSensitive:true}
+ ],
+ explanation:`glutDisplayFunc(display) registers the redraw callback, and glutMainLoop() starts the infinite event loop, which must come last.`}
+
+  ]
+},
+
+"module2": {
+  title: "Module 2 — Geometric Primitives and Attributes",
+  questions: [
+
+// ---- OpenGL Naming Convention ----
+{id:"m2-naming-1", type:"single", topic:"OpenGL Naming Convention", difficulty:"Easy", source:"Module 2",
+ stem:`In the command glVertex3fv(v), what does the "3" indicate?`,
+ opts:[["A",`The function version number`],["B",`The number of components supplied — x, y, and z`],["C",`The number of vertices in the primitive`],["D",`The size of the vector in bytes`]], ans:"B",
+ explanation:`The number in an OpenGL command name indicates how many components are supplied — 3 means x, y, and z.`},
+
+{id:"m2-naming-2", type:"single", topic:"OpenGL Naming Convention", difficulty:"Easy", source:"Module 2",
+ stem:`In the command glVertex3fv(v), what does the "f" indicate?`,
+ opts:[["A",`That the arguments are floats`],["B",`That the function is "final"`],["C",`That the arguments are byte-typed`],["D",`That the function operates on fragments`]], ans:"A",
+ explanation:`The letter suffix indicates data type; "f" means the arguments are floating-point values.`},
+
+{id:"m2-naming-3", type:"single", topic:"OpenGL Naming Convention", difficulty:"Medium", source:"Module 2",
+ stem:`In the command glVertex3fv(v), what does the trailing "v" indicate?`,
+ opts:[["A",`That the vertex is "visible"`],["B",`That the arguments are supplied as a vector (array) rather than individually`],["C",`That the coordinates are in view space`],["D",`That the function is deprecated`]], ans:"B",
+ explanation:`The trailing "v" means the arguments are supplied as a vector; omitting it means scalar arguments are passed directly, as in glVertex2f(x, y).`},
+
+{id:"m2-naming-4", type:"single", topic:"OpenGL Naming Convention", difficulty:"Medium", source:"Module 2",
+ stem:`Which data-type suffix denotes unsigned integer components?`,
+ opts:[["A",`i`],["B",`us`],["C",`ui`],["D",`ub`]], ans:"C",
+ explanation:`"ui" is the suffix for unsigned int, as opposed to "i" (int), "us" (unsigned short), and "ub" (unsigned byte).`},
+
+// ---- Point Primitives ----
+{id:"m2-points-1", type:"single", topic:"Point Primitives", difficulty:"Easy", source:"Module 2",
+ stem:`What does GL_POINTS render for each specified vertex?`,
+ opts:[["A",`A filled triangle`],["B",`A connected line segment`],["C",`One mathematical point`],["D",`A closed polygon`]], ans:"C",
+ explanation:`GL_POINTS renders one mathematical point for each specified vertex.`},
+
+{id:"m2-points-2", type:"single", topic:"Point Primitives", difficulty:"Easy", source:"Module 2",
+ stem:`Which function changes the size of rendered points?`,
+ opts:[["A",`glLineWidth`],["B",`glPointSize`],["C",`glColor3f`],["D",`glFlush`]], ans:"B",
+ explanation:`glPointSize(size) changes the size of rendered points, e.g. glPointSize(2.0f).`},
+
+// ---- Line Primitives ----
+{id:"m2-lines-1", type:"single", topic:"Line Primitives", difficulty:"Easy", source:"Module 2",
+ stem:`Which primitive draws separate, unconnected line segments where each pair of vertices produces one line?`,
+ opts:[["A",`GL_LINE_STRIP`],["B",`GL_LINE_LOOP`],["C",`GL_LINES`],["D",`GL_POLYGON`]], ans:"C",
+ explanation:`GL_LINES draws separate, unconnected line segments — each vertex pair produces one line.`},
+
+{id:"m2-lines-2", type:"single", topic:"Line Primitives", difficulty:"Medium", source:"Module 2",
+ stem:`With n vertices supplied to GL_LINES, how many lines are rendered?`,
+ opts:[["A",`n`],["B",`n - 1`],["C",`floor(n / 2)`],["D",`floor(n / 3)`]], ans:"C",
+ explanation:`GL_LINES renders floor(n / 2) lines, since each pair of vertices forms one line.`},
+
+{id:"m2-lines-3", type:"single", topic:"Line Primitives", difficulty:"Hard", source:"Module 2",
+ stem:`If GL_LINES is given 7 vertices, how many lines are drawn, and what happens to the leftover vertex?`,
+ opts:[["A",`4 lines are drawn; no vertex is left over`],
+       ["B",`3 lines are drawn; the final vertex is ignored`],
+       ["C",`7 lines are drawn; every vertex is used twice`],
+       ["D",`3 lines are drawn; the first vertex is ignored`]], ans:"B",
+ explanation:`floor(7 / 2) = 3 lines are drawn, and the final, unpaired vertex is ignored.`},
+
+{id:"m2-lines-4", type:"single", topic:"Line Primitives", difficulty:"Medium", source:"Module 2",
+ stem:`Given these four vertices supplied to GL_LINES:
+
+glVertex2f(-0.5f, -0.5f);
+glVertex2f(-0.5f,  0.5f);
+glVertex2f( 0.5f,  0.5f);
+glVertex2f( 0.5f, -0.5f);
+
+How many lines are rendered?`,
+ opts:[["A",`1`],["B",`2`],["C",`3`],["D",`4`]], ans:"B",
+ explanation:`With 4 vertices, GL_LINES renders floor(4 / 2) = 2 separate lines.`},
+
+{id:"m2-strip-1", type:"single", topic:"Line Primitives", difficulty:"Easy", source:"Module 2",
+ stem:`Which primitive connects vertices in sequence (first to second, second to third, and so on) but does NOT automatically close the shape?`,
+ opts:[["A",`GL_LINES`],["B",`GL_LINE_STRIP`],["C",`GL_LINE_LOOP`],["D",`GL_TRIANGLE_STRIP`]], ans:"B",
+ explanation:`GL_LINE_STRIP draws a sequence of connected line segments but does not connect the last vertex back to the first.`},
+
+{id:"m2-strip-2", type:"single", topic:"Line Primitives", difficulty:"Easy", source:"Module 2",
+ stem:`Which primitive behaves like GL_LINE_STRIP but adds a closing segment connecting the final vertex back to the first?`,
+ opts:[["A",`GL_LINE_LOOP`],["B",`GL_LINES`],["C",`GL_POLYGON`],["D",`GL_LINE_STRIP`]], ans:"A",
+ explanation:`GL_LINE_LOOP works like GL_LINE_STRIP but adds a closing segment between the final and first vertex.`},
+
+{id:"m2-strip-3", type:"single", topic:"Line Primitives", difficulty:"Medium", source:"Module 2",
+ stem:`Using the four square-corner vertices from the line primitives example, how many line segments does GL_LINE_STRIP draw?`,
+ opts:[["A",`2`],["B",`3`],["C",`4`],["D",`1`]], ans:"B",
+ explanation:`GL_LINE_STRIP connects each consecutive pair, producing 3 segments for 4 vertices, without closing the shape.`},
+
+{id:"m2-strip-4", type:"single", topic:"Line Primitives", difficulty:"Medium", source:"Module 2",
+ stem:`Using the same four vertices with GL_LINE_LOOP instead, how many line segments are drawn?`,
+ opts:[["A",`3`],["B",`4`],["C",`2`],["D",`5`]], ans:"B",
+ explanation:`GL_LINE_LOOP draws the same 3 connecting segments as GL_LINE_STRIP plus one closing segment, totaling 4.`},
+
+// ---- Line Width & Stippling ----
+{id:"m2-stipple-1", type:"single", topic:"Line Width & Stippling", difficulty:"Easy", source:"Module 2",
+ stem:`What is the default OpenGL line width?`,
+ opts:[["A",`0.0`],["B",`0.5`],["C",`1.0`],["D",`2.0`]], ans:"C",
+ explanation:`The default line width in OpenGL is 1.0.`},
+
+{id:"m2-stipple-2", type:"single", topic:"Line Width & Stippling", difficulty:"Medium", source:"Module 2",
+ stem:`What happens if glLineWidth is called with a width of 0.0?`,
+ opts:[["A",`Lines become invisible but no error occurs`],
+       ["B",`An error is generated, since width must be greater than 0.0`],
+       ["C",`The line width silently resets to 1.0`],
+       ["D",`All primitives stop rendering`]], ans:"B",
+ explanation:`Line width must be greater than 0.0; otherwise, an error is generated.`},
+
+{id:"m2-stipple-3", type:"single", topic:"Line Width & Stippling", difficulty:"Easy", source:"Module 2",
+ stem:`What visual effect does line stippling create?`,
+ opts:[["A",`A gradient fill across the line`],["B",`A repeated dotted or dashed pattern by masking pixels`],["C",`A 3D extrusion of the line`],["D",`Anti-aliased smoothing`]], ans:"B",
+ explanation:`Line stippling creates repeated dotted or dashed patterns by masking pixels along the line.`},
+
+{id:"m2-stipple-4", type:"single", topic:"Line Width & Stippling", difficulty:"Medium", source:"Module 2",
+ stem:`In glLineStipple(4, 0xAAAA), what does the repeatFactor argument (4) control?`,
+ opts:[["A",`The number of lines to draw`],["B",`How many times each pattern bit is repeated`],["C",`The line width in pixels`],["D",`The number of colors used`]], ans:"B",
+ explanation:`repeatFactor determines how many times each bit of the stipple pattern is repeated.`},
+
+{id:"m2-stipple-5", type:"single", topic:"Line Width & Stippling", difficulty:"Medium", source:"Module 2",
+ stem:`In glLineStipple(4, 0xAAAA), what best describes the second argument, 0xAAAA?`,
+ opts:[["A",`A 16-bit integer describing the visible stipple pattern`],["B",`The RGB color of the line`],["C",`The line's memory address`],["D",`The number of vertices in the line`]], ans:"A",
+ explanation:`The pattern argument is a 16-bit integer describing which pixels along the line are visible.`},
+
+// ---- Triangle Primitives ----
+{id:"m2-tri-1", type:"single", topic:"Triangle Primitives", difficulty:"Easy", source:"Module 2",
+ stem:`Which statement best describes how GL_TRIANGLES renders vertices?`,
+ opts:[["A",`It draws one connected fan of triangles sharing the first vertex`],
+       ["B",`It draws independent triangles, with each group of three vertices forming one triangle`],
+       ["C",`It draws a single triangle regardless of vertex count`],
+       ["D",`It connects every vertex to every other vertex`]], ans:"B",
+ explanation:`GL_TRIANGLES draws independent triangles — every group of three vertices produces one triangle.`},
+
+{id:"m2-tri-2", type:"single", topic:"Triangle Primitives", difficulty:"Medium", source:"Module 2",
+ stem:`With n vertices supplied to GL_TRIANGLES, how many triangles are produced?`,
+ opts:[["A",`n`],["B",`floor(n / 2)`],["C",`floor(n / 3)`],["D",`floor(n / 4)`]], ans:"C",
+ explanation:`GL_TRIANGLES produces floor(n / 3) triangles, since every group of three vertices forms one triangle.`},
+
+{id:"m2-tri-3", type:"single", topic:"Triangle Primitives", difficulty:"Hard", source:"Module 2",
+ stem:`If GL_TRIANGLES is given 8 vertices, how many triangles are drawn?`,
+ opts:[["A",`1`],["B",`2`],["C",`3`],["D",`8`]], ans:"B",
+ explanation:`floor(8 / 3) = 2 triangles are drawn; the remaining 2 vertices don't form a complete group and are ignored.`},
+
+// ---- Polygon Primitives ----
+{id:"m2-poly-1", type:"single", topic:"Polygon Primitives", difficulty:"Medium", source:"Module 2",
+ stem:`What is the minimum number of vertices GL_POLYGON needs to render anything?`,
+ opts:[["A",`1`],["B",`2`],["C",`3`],["D",`4`]], ans:"C",
+ explanation:`GL_POLYGON requires at least three vertices; with fewer, nothing is rendered.`},
+
+{id:"m2-poly-2", type:"single", topic:"Polygon Primitives", difficulty:"Easy", source:"Module 2",
+ stem:`What shape does GL_POLYGON draw when given six vertices, as in the source example with vertices at (0.1,0.1), (0.6,0.1), (0.7,0.3), (0.6,0.6), (0.1,0.6), (0.0,0.3)?`,
+ opts:[["A",`Two separate triangles`],["B",`A single filled convex hexagon`],["C",`A closed but unfilled outline only`],["D",`Six separate points`]], ans:"B",
+ explanation:`GL_POLYGON draws one filled convex n-sided polygon; six vertices produce a filled hexagon.`},
+
+// ---- Triangle Strip & Fan ----
+{id:"m2-fan-1", type:"single", topic:"Triangle Strip & Fan", difficulty:"Medium", source:"Module 2",
+ stem:`In GL_TRIANGLE_STRIP, which vertices form the second triangle?`,
+ opts:[["A",`v0, v1, v2`],["B",`v1, v2, v3`],["C",`v0, v2, v3`],["D",`v2, v3, v4`]], ans:"B",
+ explanation:`The first triangle uses v0, v1, v2; the second uses v1, v2, v3.`},
+
+{id:"m2-fan-2", type:"single", topic:"Triangle Strip & Fan", difficulty:"Medium", source:"Module 2",
+ stem:`With 4 vertices supplied, how many triangles does GL_TRIANGLE_STRIP produce?`,
+ opts:[["A",`1`],["B",`2`],["C",`3`],["D",`4`]], ans:"B",
+ explanation:`GL_TRIANGLE_STRIP forms the first triangle from the first 3 vertices, then one additional triangle per extra vertex — 2 triangles from 4 vertices.`},
+
+{id:"m2-fan-3", type:"single", topic:"Triangle Strip & Fan", difficulty:"Easy", source:"Module 2",
+ stem:`In GL_TRIANGLE_FAN, which vertex is shared by every triangle in the fan?`,
+ opts:[["A",`The last vertex supplied`],["B",`The first vertex supplied (v0)`],["C",`The middle vertex`],["D",`No vertex is shared`]], ans:"B",
+ explanation:`GL_TRIANGLE_FAN forms triangles as v0,v1,v2 then v0,v2,v3 then v0,v3,v4 and so on — always sharing the first vertex.`},
+
+{id:"m2-fan-4", type:"single", topic:"Triangle Strip & Fan", difficulty:"Hard", source:"Module 2",
+ stem:`Which statement best distinguishes GL_TRIANGLE_STRIP from GL_TRIANGLE_FAN?`,
+ opts:[["A",`Strip triangles each share the previous triangle's last two vertices; fan triangles all share the very first vertex`],
+       ["B",`Strip and fan behave identically`],
+       ["C",`Fan triangles never share any vertices; strip triangles share all vertices`],
+       ["D",`Strip requires exactly 3 vertices; fan requires exactly 4`]], ans:"A",
+ explanation:`In a strip, each new triangle shares the last two vertices of the previous one. In a fan, every triangle shares the first vertex.`},
+
+// ---- Quad Primitives ----
+{id:"m2-quad-1", type:"single", topic:"Quad Primitives", difficulty:"Medium", source:"Module 2",
+ stem:`With n vertices supplied to GL_QUADS, how many quadrilaterals are rendered?`,
+ opts:[["A",`n`],["B",`floor(n / 2)`],["C",`floor(n / 3)`],["D",`floor(n / 4)`]], ans:"D",
+ explanation:`GL_QUADS renders floor(n / 4) independent quadrilaterals; excess vertices that don't complete a group of 4 are ignored.`},
+
+{id:"m2-quad-2", type:"single", topic:"Quad Primitives", difficulty:"Hard", source:"Module 2",
+ stem:`In GL_QUAD_STRIP, which vertices form the first quadrilateral?`,
+ opts:[["A",`v0, v1, v2, v3`],["B",`v0, v1, v3, v2`],["C",`v1, v2, v3, v4`],["D",`v0, v2, v1, v3`]], ans:"B",
+ explanation:`In GL_QUAD_STRIP the first quad uses v0, v1, v3, v2 (note the order), and the next uses v2, v3, v5, v4.`},
+
+{id:"m2-quad-3", type:"single", topic:"Quad Primitives", difficulty:"Medium", source:"Module 2",
+ stem:`Which statement best distinguishes GL_QUADS from GL_QUAD_STRIP?`,
+ opts:[["A",`GL_QUADS draws independent quads; GL_QUAD_STRIP draws connected quads that share edges`],
+       ["B",`GL_QUAD_STRIP draws independent quads; GL_QUADS draws connected quads`],
+       ["C",`They are two names for the exact same behavior`],
+       ["D",`GL_QUADS can only render triangles, not quads`]], ans:"A",
+ explanation:`GL_QUADS renders each group of 4 vertices as an independent quadrilateral, while GL_QUAD_STRIP renders connected quads that share edges.`},
+
+// ---- OpenGL Color ----
+{id:"m2-color-1", type:"single", topic:"OpenGL Color", difficulty:"Easy", source:"Module 2",
+ stem:`In RGBA color mode, what does the "A" represent?`,
+ opts:[["A",`Ambient light`],["B",`Alpha — opacity or transparency`],["C",`Angle of incidence`],["D",`Anti-aliasing factor`]], ans:"B",
+ explanation:`A stands for alpha, which controls opacity or transparency.`},
+
+{id:"m2-color-2", type:"single", topic:"OpenGL Color", difficulty:"Easy", source:"Module 2",
+ stem:`Which alpha value means an object is fully transparent?`,
+ opts:[["A",`1.0`],["B",`0.5`],["C",`0.0`],["D",`-1.0`]], ans:"C",
+ explanation:`An alpha of 0.0 means fully transparent; 1.0 means fully opaque.`},
+
+{id:"m2-color-3", type:"single", topic:"OpenGL Color", difficulty:"Easy", source:"Module 2",
+ stem:`What color does glColor3f(1.0f, 1.0f, 1.0f) represent?`,
+ opts:[["A",`Black`],["B",`White`],["C",`Red`],["D",`Transparent`]], ans:"B",
+ explanation:`(1.0, 1.0, 1.0) for RGB represents white; (0.0, 0.0, 0.0) represents black.`},
+
+{id:"m2-color-4", type:"single", topic:"OpenGL Color", difficulty:"Medium", source:"Module 2",
+ stem:`Which function specifies color using unsigned-byte RGB values, such as glColor3ub(92, 181, 100)?`,
+ opts:[["A",`glColor3f`],["B",`glColor4f`],["C",`glColor3ub`],["D",`glColor3d`]], ans:"C",
+ explanation:`glColor3ub takes unsigned-byte RGB values, unlike glColor3f which takes floating-point RGB values.`},
+
+{id:"m2-color-5", type:"single", topic:"OpenGL Color", difficulty:"Easy", source:"Module 2",
+ stem:`Which function specifies an RGBA color using floating-point values?`,
+ opts:[["A",`glColor3f`],["B",`glColor4f`],["C",`glColor3ub`],["D",`glPointSize`]], ans:"B",
+ explanation:`glColor4f(red, green, blue, alpha) specifies RGBA color using floating-point values.`},
+
+{id:"m2-color-6", type:"single", topic:"OpenGL Color", difficulty:"Medium", source:"Module 2",
+ stem:`When different vertices of the same primitive are assigned different colors, what typically happens across the rendered surface?`,
+ opts:[["A",`Only the last vertex's color is used for the whole primitive`],
+       ["B",`The colors are interpolated across the rendered primitive`],
+       ["C",`OpenGL raises an error`],
+       ["D",`Only the first vertex's color is used`]], ans:"B",
+ explanation:`Colors assigned to different vertices of the same primitive may be interpolated across the rendered primitive.`},
+
+// ---- Code-blank questions ----
+{id:"m2-code-1", type:"code_blank", topic:"Line Width & Stippling", difficulty:"Medium", source:"Module 2 code sample",
+ stem:`Complete the missing statement that enables line stippling.`,
+ code:`void display() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    __BLANK_1__
+    glLineWidth(2.0f);
+    glLineStipple(4, 0xAAAA);
+
+    glBegin(GL_LINE_STRIP);
+    glVertex2f(-0.5f, -0.5f);
+    glVertex2f(-0.5f,  0.5f);
+    glVertex2f( 0.5f,  0.5f);
+    glVertex2f( 0.5f, -0.5f);
+    glEnd();
+
+    glFlush();
+    glDisable(GL_LINE_STIPPLE);
+}`,
+ blanks:[{id:1, answer:`glEnable(GL_LINE_STIPPLE);`, accepted:[`glEnable(GL_LINE_STIPPLE)`], caseSensitive:true}],
+ explanation:`glEnable(GL_LINE_STIPPLE) must be called before the stipple pattern takes effect.`},
+
+{id:"m2-code-2", type:"code_blank", topic:"Line Width & Stippling", difficulty:"Medium", source:"Module 2 code sample",
+ stem:`Complete the two missing statements that set the line width and the stipple pattern.`,
+ code:`void display() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glEnable(GL_LINE_STIPPLE);
+    __BLANK_1__
+    __BLANK_2__
+
+    glBegin(GL_LINE_STRIP);
+    glVertex2f(-0.5f, -0.5f);
+    glVertex2f(-0.5f,  0.5f);
+    glVertex2f( 0.5f,  0.5f);
+    glVertex2f( 0.5f, -0.5f);
+    glEnd();
+
+    glFlush();
+    glDisable(GL_LINE_STIPPLE);
+}`,
+ blanks:[
+   {id:1, answer:`glLineWidth(2.0f);`, accepted:[`glLineWidth(2.0f)`,`glLineWidth(2.0);`,`glLineWidth(2.0)`,`glLineWidth(2);`,`glLineWidth(2)`], caseSensitive:true},
+   {id:2, answer:`glLineStipple(4, 0xAAAA);`, accepted:[`glLineStipple(4,0xAAAA);`,`glLineStipple(4, 0xAAAA)`], caseSensitive:true}
+ ],
+ explanation:`glLineWidth(2.0f) sets the line width, and glLineStipple(4, 0xAAAA) defines the repeat factor and bit pattern for the stipple.`},
+
+{id:"m2-code-3", type:"code_blank", topic:"Line Primitives", difficulty:"Medium", source:"Module 2 code sample",
+ stem:`Complete the missing statement that begins a connected line-strip vertex list.`,
+ code:`void display() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glEnable(GL_LINE_STIPPLE);
+    glLineWidth(2.0f);
+    glLineStipple(4, 0xAAAA);
+
+    __BLANK_1__
+    glVertex2f(-0.5f, -0.5f);
+    glVertex2f(-0.5f,  0.5f);
+    glVertex2f( 0.5f,  0.5f);
+    glVertex2f( 0.5f, -0.5f);
+    glEnd();
+
+    glFlush();
+    glDisable(GL_LINE_STIPPLE);
+}`,
+ blanks:[{id:1, answer:`glBegin(GL_LINE_STRIP);`, accepted:[`glBegin(GL_LINE_STRIP)`], caseSensitive:true}],
+ explanation:`GL_LINE_STRIP draws a sequence of connected line segments without closing the shape.`},
+
+{id:"m2-code-4", type:"code_blank", topic:"Line Width & Stippling", difficulty:"Easy", source:"Module 2 code sample",
+ stem:`Complete the missing statement that disables line stippling at the end of the function.`,
+ code:`void display() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glEnable(GL_LINE_STIPPLE);
+    glLineWidth(2.0f);
+    glLineStipple(4, 0xAAAA);
+
+    glBegin(GL_LINE_STRIP);
+    glVertex2f(-0.5f, -0.5f);
+    glVertex2f(-0.5f,  0.5f);
+    glVertex2f( 0.5f,  0.5f);
+    glVertex2f( 0.5f, -0.5f);
+    glEnd();
+
+    glFlush();
+    __BLANK_1__
+}`,
+ blanks:[{id:1, answer:`glDisable(GL_LINE_STIPPLE);`, accepted:[`glDisable(GL_LINE_STIPPLE)`], caseSensitive:true}],
+ explanation:`glDisable(GL_LINE_STIPPLE) turns stippling back off after this draw call.`},
+
+{id:"m2-code-5", type:"code_blank", topic:"Point Primitives", difficulty:"Medium", source:"Module 2 code sample",
+ stem:`Complete the two missing statements that set the point size and begin a point-primitive vertex list.`,
+ code:`__BLANK_1__
+__BLANK_2__
+
+glColor3f(1.0f, 1.0f, 1.0f);
+glVertex2f(-0.5f, -0.5f);
+
+glColor3f(1.0f, 0.0f, 1.0f);
+glVertex2f(-0.5f, 0.5f);
+
+glColor3f(0.0f, 0.0f, 1.0f);
+glVertex2f(0.5f, 0.5f);
+
+glColor3f(0.0f, 1.0f, 0.0f);
+glVertex2f(0.5f, -0.5f);
+
+glEnd();`,
+ blanks:[
+   {id:1, answer:`glPointSize(2.0f);`, accepted:[`glPointSize(2.0f)`,`glPointSize(2.0);`,`glPointSize(2.0)`,`glPointSize(2);`,`glPointSize(2)`], caseSensitive:true},
+   {id:2, answer:`glBegin(GL_POINTS);`, accepted:[`glBegin(GL_POINTS)`], caseSensitive:true}
+ ],
+ explanation:`glPointSize(2.0f) sets the point size before glBegin(GL_POINTS) starts the point vertex list.`},
+
+{id:"m2-code-6", type:"code_blank", topic:"OpenGL Color", difficulty:"Easy", source:"Module 2 code sample",
+ stem:`Complete the missing statement that assigns white to the first point.`,
+ code:`glPointSize(2.0f);
+glBegin(GL_POINTS);
+
+__BLANK_1__
+glVertex2f(-0.5f, -0.5f);
+
+glColor3f(1.0f, 0.0f, 1.0f);
+glVertex2f(-0.5f, 0.5f);
+
+glColor3f(0.0f, 0.0f, 1.0f);
+glVertex2f(0.5f, 0.5f);
+
+glColor3f(0.0f, 1.0f, 0.0f);
+glVertex2f(0.5f, -0.5f);
+
+glEnd();`,
+ blanks:[{id:1, answer:`glColor3f(1.0f, 1.0f, 1.0f);`, accepted:[`glColor3f(1.0f,1.0f,1.0f);`,`glColor3f(1.0f, 1.0f, 1.0f)`,`glColor3f(1.0, 1.0, 1.0);`,`glColor3f(1,1,1);`], caseSensitive:true}],
+ explanation:`(1.0, 1.0, 1.0) sets the current color to white before the first vertex is specified.`},
+
+{id:"m2-code-7", type:"code_blank", topic:"Line Primitives", difficulty:"Medium", source:"Module 2 code sample",
+ stem:`Complete the missing statement that begins a GL_LINE_LOOP vertex list, using the square-corner vertices.`,
+ code:`__BLANK_1__
+glVertex2f(-0.5f, -0.5f);
+glVertex2f(-0.5f,  0.5f);
+glVertex2f( 0.5f,  0.5f);
+glVertex2f( 0.5f, -0.5f);
+glEnd();`,
+ blanks:[{id:1, answer:`glBegin(GL_LINE_LOOP);`, accepted:[`glBegin(GL_LINE_LOOP)`], caseSensitive:true}],
+ explanation:`GL_LINE_LOOP connects all four vertices in sequence and adds a closing segment back to the first vertex.`},
+
+{id:"m2-code-8", type:"code_blank", topic:"Line Primitives", difficulty:"Medium", source:"Module 2 code sample",
+ stem:`Complete the missing statement that begins an unconnected-line vertex list.`,
+ code:`glColor3f(0.0f, 0.0f, 1.0f);
+glLineWidth(2.0f);
+__BLANK_1__
+glVertex2f(-0.8f, 0.0f);
+glVertex2f( 0.8f, 0.0f);
+glEnd();
+glFlush();`,
+ blanks:[{id:1, answer:`glBegin(GL_LINES);`, accepted:[`glBegin(GL_LINES)`], caseSensitive:true}],
+ explanation:`GL_LINES draws one unconnected line segment per vertex pair; here it draws a single blue line.`},
+
+{id:"m2-code-9", type:"code_blank", topic:"Triangle Primitives", difficulty:"Easy", source:"Module 2 code sample",
+ stem:`Complete the missing statement that begins an independent-triangles vertex list.`,
+ code:`void displayTriangle() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    __BLANK_1__
+    glVertex2f(-0.5f, -0.5f);
+    glVertex2f( 0.5f, -0.5f);
+    glVertex2f( 0.0f,  0.5f);
+    glEnd();
+    glFlush();
+}`,
+ blanks:[{id:1, answer:`glBegin(GL_TRIANGLES);`, accepted:[`glBegin(GL_TRIANGLES)`], caseSensitive:true}],
+ explanation:`GL_TRIANGLES draws one independent triangle for each group of three vertices — here, one triangle from three vertices.`},
+
+{id:"m2-code-10", type:"code_blank", topic:"Polygon Primitives", difficulty:"Medium", source:"Module 2 code sample",
+ stem:`Complete the missing statement that begins the filled-polygon vertex list.`,
+ code:`void displayPolygon() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    __BLANK_1__
+    glVertex2f(0.1f, 0.1f);
+    glVertex2f(0.6f, 0.1f);
+    glVertex2f(0.7f, 0.3f);
+    glVertex2f(0.6f, 0.6f);
+    glVertex2f(0.1f, 0.6f);
+    glVertex2f(0.0f, 0.3f);
+    glEnd();
+    glFlush();
+}`,
+ blanks:[{id:1, answer:`glBegin(GL_POLYGON);`, accepted:[`glBegin(GL_POLYGON)`], caseSensitive:true}],
+ explanation:`GL_POLYGON draws one filled convex polygon; here, six vertices produce a filled hexagon.`},
+
+{id:"m2-code-11", type:"code_blank", topic:"Triangle Strip & Fan", difficulty:"Medium", source:"Module 2 code sample",
+ stem:`Complete the missing statement that begins a connected-triangle-strip vertex list.`,
+ code:`void displayTriangleStrip() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    __BLANK_1__
+    glVertex2f(-0.5f, -0.5f);
+    glVertex2f( 0.5f, -0.5f);
+    glVertex2f( 0.0f,  0.5f);
+    glVertex2f( 0.7f,  0.5f);
+    glEnd();
+    glFlush();
+}`,
+ blanks:[{id:1, answer:`glBegin(GL_TRIANGLE_STRIP);`, accepted:[`glBegin(GL_TRIANGLE_STRIP)`], caseSensitive:true}],
+ explanation:`GL_TRIANGLE_STRIP renders connected triangles that share edges; 4 vertices here produce 2 triangles.`},
+
+{id:"m2-code-12", type:"code_blank", topic:"Triangle Strip & Fan", difficulty:"Medium", source:"Module 2 code sample",
+ stem:`Complete the missing statement that begins a triangle-fan vertex list.`,
+ code:`void displayTriangleFan() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    __BLANK_1__
+    glVertex2f( 0.0f, -0.5f);
+    glVertex2f( 0.5f,  0.5f);
+    glVertex2f( 0.0f,  0.5f);
+    glVertex2f(-0.5f,  0.5f);
+    glEnd();
+    glFlush();
+}`,
+ blanks:[{id:1, answer:`glBegin(GL_TRIANGLE_FAN);`, accepted:[`glBegin(GL_TRIANGLE_FAN)`], caseSensitive:true}],
+ explanation:`GL_TRIANGLE_FAN renders connected triangles that all share the first supplied vertex.`},
+
+{id:"m2-code-13", type:"code_blank", topic:"Quad Primitives", difficulty:"Medium", source:"Module 2 code sample",
+ stem:`Complete the missing first vertex of the quadrilateral.`,
+ code:`glBegin(GL_QUADS);
+__BLANK_1__
+glVertex2f( 0.5f, -0.5f);
+glVertex2f( 0.5f,  0.5f);
+glVertex2f(-0.5f,  0.5f);
+glEnd();`,
+ blanks:[{id:1, answer:`glVertex2f(-0.5f, -0.5f);`, accepted:[`glVertex2f(-0.5f,-0.5f);`,`glVertex2f(-0.5f, -0.5f)`,`glVertex2f(-0.5,-0.5);`,`glVertex2f(-0.5, -0.5);`], caseSensitive:true}],
+ explanation:`This line-up of four vertices, drawn with GL_QUADS, forms one independent quadrilateral.`},
+
+{id:"m2-code-14", type:"code_blank", topic:"Quad Primitives", difficulty:"Medium", source:"Module 2 code sample",
+ stem:`Complete the missing statement that begins the vertex list, given the primitive mode is GL_QUADS.`,
+ code:`__BLANK_1__
+glVertex2f(-0.5f, -0.5f);
+glVertex2f( 0.5f, -0.5f);
+glVertex2f( 0.5f,  0.5f);
+glVertex2f(-0.5f,  0.5f);
+glEnd();`,
+ blanks:[{id:1, answer:`glBegin(GL_QUADS);`, accepted:[`glBegin(GL_QUADS)`], caseSensitive:true}],
+ explanation:`GL_QUADS draws one independent quadrilateral for every group of four vertices.`},
+
+{id:"m2-code-15", type:"code_blank", topic:"Quad Primitives", difficulty:"Hard", source:"Module 2 code sample",
+ stem:`Complete the missing statement that begins a connected quad-strip vertex list.`,
+ code:`__BLANK_1__
+glVertex2f(-0.5f, -0.5f);
+glVertex2f(-0.5f,  0.5f);
+glVertex2f( 0.0f, -0.5f);
+glVertex2f( 0.0f,  0.5f);
+glEnd();`,
+ blanks:[{id:1, answer:`glBegin(GL_QUAD_STRIP);`, accepted:[`glBegin(GL_QUAD_STRIP)`], caseSensitive:true}],
+ explanation:`GL_QUAD_STRIP renders connected quadrilaterals that share edges — the first quad uses v0, v1, v3, v2.`},
+
+{id:"m2-code-16", type:"code_blank", topic:"OpenGL Color", difficulty:"Medium", source:"Module 2 code sample",
+ stem:`Complete the missing statement that sets an unsigned-byte RGB color before drawing the triangle.`,
+ code:`void colorSample2() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    __BLANK_1__
+    glBegin(GL_TRIANGLES);
+    glVertex2f(-0.5f, -0.5f);
+    glVertex2f( 0.5f, -0.5f);
+    glVertex2f( 0.0f,  0.5f);
+    glEnd();
+    glFlush();
+}`,
+ blanks:[{id:1, answer:`glColor3ub(92, 181, 100);`, accepted:[`glColor3ub(92,181,100);`,`glColor3ub(92, 181, 100)`], caseSensitive:true}],
+ explanation:`glColor3ub takes unsigned-byte RGB values — here, (92, 181, 100).`},
+
+{id:"m2-code-17", type:"code_blank", topic:"OpenGL Color", difficulty:"Medium", source:"Module 2 code sample",
+ stem:`Complete the two missing statements: setting a semi-transparent red RGBA color with float values, then supplying the triangle's final vertex at (0.0, 0.5).`,
+ code:`__BLANK_1__
+glBegin(GL_TRIANGLES);
+glVertex2f(-0.5f, -0.5f);
+glVertex2f(0.5f, -0.5f);
+__BLANK_2__
+glEnd();
+glFlush();`,
+ blanks:[
+   {id:1, answer:`glColor4f(1.0f, 0.0f, 0.0f, 0.5f);`, accepted:[`glColor4f(1.0f,0.0f,0.0f,0.5f);`,`glColor4f(1.0f, 0.0f, 0.0f, 0.5f)`,`glColor4f(1.0, 0.0, 0.0, 0.5);`], caseSensitive:true},
+   {id:2, answer:`glVertex2f(0.0f, 0.5f);`, accepted:[`glVertex2f(0.0f,0.5f);`,`glVertex2f(0.0f, 0.5f)`,`glVertex2f(0.0, 0.5);`,`glVertex2f(0,0.5);`], caseSensitive:true}
+ ],
+ explanation:`glColor4f(1.0f, 0.0f, 0.0f, 0.5f) sets a half-opaque red using floating-point RGBA values; the final vertex completes the triangle at (0.0, 0.5).`}
+
+  ]
+},
+
+"diagnostic": {
+  title: "Diagnostic Test — Programming Graphics",
+  questions: [
+
+{id:"diagnostic-01", type:"single", topic:"Line Primitives", difficulty:"Easy", source:"Diagnostic Test",
+ stem:`Which primitive draws a sequence of connected line segments without automatically closing it?`,
+ opts:[["A",`GL_LINE_LOOP`],["B",`GL_POINTS`],["C",`GL_LINES`],["D",`GL_LINE_STRIP`]], ans:"D",
+ explanation:`GL_LINE_STRIP connects consecutive vertices but does not automatically connect the final vertex back to the first.`},
+
+{id:"diagnostic-02", type:"single", topic:"OpenGL Color", difficulty:"Easy", source:"Diagnostic Test",
+ stem:`In RGBA mode, RGB represents red, green, and ____.`,
+ opts:[["A",`Black`],["B",`Blue`],["C",`Brightness`],["D",`Buffer`]], ans:"B",
+ explanation:`RGB stands for red, green, and blue, while A represents alpha.`},
+
+{id:"diagnostic-03", type:"single", topic:"GLUT Program Structure", difficulty:"Easy", source:"Diagnostic Test",
+ stem:`Which function forces previously buffered OpenGL commands to execute?`,
+ opts:[["A",`glutCreateWindow()`],["B",`glClear()`],["C",`glEnd()`],["D",`glFlush()`]], ans:"D",
+ explanation:`glFlush() forces previously issued buffered OpenGL commands to begin execution.`},
+
+{id:"diagnostic-04", type:"single", topic:"Triangle Strip & Fan", difficulty:"Easy", source:"Diagnostic Test",
+ stem:`In GL_TRIANGLE_FAN, every triangle shares which specified vertex?`,
+ opts:[["A",`A random vertex`],["B",`The first vertex`],["C",`The last vertex`],["D",`The second vertex`]], ans:"B",
+ explanation:`Every triangle in a triangle fan uses the first specified vertex as its shared center or anchor.`},
+
+{id:"diagnostic-05", type:"single", topic:"GLUT Program Structure", difficulty:"Medium", source:"Diagnostic Test",
+ stem:`Which call changes the initial GLUT window size to 1024 by 768?`,
+ opts:[["A",`glPointSize(1024)`],["B",`glutInitWindowSize(1024, 768)`],["C",`glutInitWindowPosition(1024, 768)`],["D",`glVertex2f(1024, 768)`]], ans:"B",
+ explanation:`glutInitWindowSize(width, height) sets the initial GLUT window dimensions.`}
+
+  ]
+},
+
+"module3": {
+  title: "Module 3 — GLUT Extensions and Callbacks",
+  questions: [
+
+{id:"m3-text-1", type:"single", topic:"Text & Raster Positioning", difficulty:"Easy", source:"Module 3",
+ stem:`What is the purpose of glRasterPos2f(x, y)?`,
+ opts:[["A",`It sets the current raster position in 2D space for pixel-based operations`],
+       ["B",`It draws a filled rectangle at (x, y)`],
+       ["C",`It moves the mouse cursor to (x, y)`],
+       ["D",`It sets the window's title bar position`]], ans:"A",
+ explanation:`glRasterPos2f(x, y) sets the current raster position in 2D space, which determines where bitmap text or pixel images will be drawn.`},
+
+{id:"m3-text-2", type:"single", topic:"Text & Raster Positioning", difficulty:"Medium", source:"Module 3",
+ stem:`The x, y coordinates passed to glRasterPos2f() are affected by which matrices?`,
+ opts:[["A",`Only the viewport matrix`],
+       ["B",`The current model-view and projection matrices`],
+       ["C",`Only the texture matrix`],
+       ["D",`They are never transformed by any matrix`]], ans:"B",
+ explanation:`The raster position is transformed by the current model-view and projection matrices, just like any other vertex coordinate.`},
+
+{id:"m3-text-3", type:"single", topic:"Text & Raster Positioning", difficulty:"Medium", source:"Module 3",
+ stem:`Within which stage of the graphics pipeline do raster position and bitmap text functions operate?`,
+ opts:[["A",`The vertex shader stage`],["B",`The rasterization stage`],["C",`The geometry shader stage`],["D",`The primitive assembly stage`]], ans:"B",
+ explanation:`Raster positioning and bitmap text functions operate within the rasterization stage, where pixel-based operations are performed.`},
+
+{id:"m3-text-4", type:"single", topic:"Text & Raster Positioning", difficulty:"Easy", source:"Module 3",
+ stem:`What does glutBitmapString() do?`,
+ opts:[["A",`It renders a string of bitmap characters at the current raster position using a specified GLUT bitmap font`],
+       ["B",`It converts a bitmap image into a string of text`],
+       ["C",`It saves the current window contents as a bitmap file`],
+       ["D",`It measures the pixel width of a string`]], ans:"A",
+ explanation:`glutBitmapString() renders a string of bitmap characters at the current raster position using a specified GLUT bitmap font, commonly for simple on-screen text.`},
+
+{id:"m3-text-5", type:"single", topic:"Text & Raster Positioning", difficulty:"Medium", source:"Module 3",
+ stem:`Why must glColor3f() typically be called before glRasterPos2f() when drawing colored text?`,
+ opts:[["A",`glRasterPos2f() resets the color to black automatically`],
+       ["B",`OpenGL associates the current color with the raster position, so the color should be set before the position`],
+       ["C",`glColor3f() cannot be called after glFlush()`],
+       ["D",`There is no required order between the two calls`]], ans:"B",
+ explanation:`The module notes to set the color before setting the position, since the current color is captured along with the raster position for the text that follows.`},
+
+{id:"m3-freeglut-1", type:"single", topic:"GLUT Requirements", difficulty:"Medium", source:"Module 3",
+ stem:`Which toolkit extension provides functions such as drawBitmapString() beyond standard GLUT?`,
+ opts:[["A",`freeglut`],["B",`OpenCL`],["C",`Vulkan`],["D",`SDL`]], ans:"A",
+ explanation:`drawBitmapString() is an extension of freeglut, so the freeglut headers must be added to the code to use it.`},
+
+{id:"m3-color-1", type:"single", topic:"Setting Up Color", difficulty:"Easy", source:"Module 3",
+ stem:`Which call sets the current color to blue, as used before drawing raster text?`,
+ opts:[["A",`glColor3f(0.0f, 0.0f, 1.0f)`],["B",`glColor3f(1.0f, 0.0f, 0.0f)`],["C",`glColor3f(0.0f, 1.0f, 0.0f)`],["D",`glColor3f(1.0f, 1.0f, 1.0f)`]], ans:"A",
+ explanation:`glColor3f(0.0f, 0.0f, 1.0f) sets the current color to blue.`},
+
+{id:"m3-color-2", type:"single", topic:"Setting Up Color", difficulty:"Easy", source:"Module 3",
+ stem:`Which glColor3f() call produces magenta?`,
+ opts:[["A",`glColor3f(1.0f, 1.0f, 0.0f)`],["B",`glColor3f(0.0f, 1.0f, 1.0f)`],["C",`glColor3f(1.0f, 0.0f, 1.0f)`],["D",`glColor3f(1.0f, 1.0f, 1.0f)`]], ans:"C",
+ explanation:`Magenta is produced by full red and full blue with no green: glColor3f(1.0f, 0.0f, 1.0f).`},
+
+{id:"m3-color-3", type:"single", topic:"Setting Up Color", difficulty:"Easy", source:"Module 3",
+ stem:`Which glColor3f() call produces yellow?`,
+ opts:[["A",`glColor3f(1.0f, 1.0f, 0.0f)`],["B",`glColor3f(0.0f, 1.0f, 0.0f)`],["C",`glColor3f(1.0f, 0.0f, 1.0f)`],["D",`glColor3f(0.0f, 0.0f, 1.0f)`]], ans:"A",
+ explanation:`Yellow is full red plus full green with no blue: glColor3f(1.0f, 1.0f, 0.0f).`},
+
+{id:"m3-font-1", type:"single", topic:"GLUT Font Constants", difficulty:"Medium", source:"Module 3",
+ stem:`Which best describes GLUT_STROKE_ROMAN?`,
+ opts:[["A",`A fixed-size bitmap font used for 2D overlays`],
+       ["B",`A stroke font rendered using line segments, allowing scalable vector-based text`],
+       ["C",`A constant that disables all text rendering`],
+       ["D",`A font used only for numeric characters`]], ans:"B",
+ explanation:`GLUT_STROKE_ROMAN is a GLUT stroke font rendered using line segments, making it scalable and suitable for zoomable or transformable text in 3D scenes.`},
+
+{id:"m3-font-2", type:"single", topic:"GLUT Font Constants", difficulty:"Medium", source:"Module 3",
+ stem:`What best describes GLUT_BITMAP_HELVETICA_12?`,
+ opts:[["A",`A scalable stroke font suited to 3D transformations`],
+       ["B",`A fixed-size bitmap font in Helvetica style with 12-point height, used for small readable text in 2D overlays or HUDs`],
+       ["C",`A font that only supports uppercase letters`],
+       ["D",`A vector font that must be rotated to be legible`]], ans:"B",
+ explanation:`GLUT_BITMAP_HELVETICA_12 is a fixed-size bitmap font in Helvetica style with 12-point height, used for rendering small, readable text in 2D overlays or HUDs.`},
+
+{id:"m3-font-3", type:"single", topic:"GLUT Font Constants", difficulty:"Medium", source:"Module 3",
+ stem:`What is the key difference between bitmap fonts and stroke fonts in GLUT?`,
+ opts:[["A",`Bitmap fonts are fixed-size raster images of characters, while stroke fonts are drawn with scalable line segments`],
+       ["B",`Stroke fonts are always faster to render than bitmap fonts`],
+       ["C",`Bitmap fonts can be freely scaled in 3D, while stroke fonts cannot`],
+       ["D",`There is no functional difference between the two`]], ans:"A",
+ explanation:`Bitmap fonts are fixed-size, pixel-based representations, whereas stroke fonts are built from line segments and can be scaled or transformed like other geometry.`},
+
+{id:"m3-font-4", type:"single", topic:"GLUT Font Constants", difficulty:"Easy", source:"Module 3",
+ stem:`Which of these is a valid GLUT bitmap font constant listed in the module?`,
+ opts:[["A",`GLUT_BITMAP_9_BY_15`],["B",`GLUT_BITMAP_ARIAL_14`],["C",`GLUT_FONT_ROMAN_12`],["D",`GLUT_TEXT_HELVETICA`]], ans:"A",
+ explanation:`GLUT_BITMAP_9_BY_15 is one of the GLUT bitmap font constants listed, alongside GLUT_BITMAP_8_BY_13, the Times Roman set, and the Helvetica set.`},
+
+{id:"m3-font-5", type:"single", topic:"GLUT Font Constants", difficulty:"Medium", source:"Module 3",
+ stem:`Which font family below includes both GLUT_BITMAP_TIMES_ROMAN_10 and GLUT_BITMAP_TIMES_ROMAN_24?`,
+ opts:[["A",`Times Roman bitmap fonts at two different point sizes`],
+       ["B",`Two unrelated stroke fonts`],
+       ["C",`A single scalable font with no fixed sizes`],
+       ["D",`Fonts reserved for full-screen mode only`]], ans:"A",
+ explanation:`GLUT_BITMAP_TIMES_ROMAN_10 and GLUT_BITMAP_TIMES_ROMAN_24 are fixed-size Times Roman bitmap fonts at 10-point and 24-point heights respectively.`},
+
+{id:"m3-code-read-1", type:"single", topic:"Code Reading", difficulty:"Medium", source:"Module 3",
+ stem:`In the textSample() function:
+
+void textSample(){
+    glClear(GL_COLOR_BUFFER_BIT);
+    const unsigned char str[100] = {"FEU-TECH"};
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glRasterPos2f(0.0, 0.0);
+    glutBitmapString(GLUT_BITMAP_HELVETICA_18, str);
+    glFlush();
+}
+
+what color will the text "FEU-TECH" be drawn in?`,
+ opts:[["A",`Red`],["B",`Green`],["C",`Blue`],["D",`White`]], ans:"C",
+ explanation:`glColor3f(0.0f, 0.0f, 1.0f) sets the drawing color to blue before the text is rendered.`},
+
+{id:"m3-code-read-2", type:"single", topic:"Code Reading", difficulty:"Medium", source:"Module 3",
+ stem:`In the same textSample() function, at what screen-space object coordinate does the text begin?`,
+ opts:[["A",`(0.0, 0.0), because glRasterPos2f(0.0, 0.0) sets the raster position there`],
+       ["B",`Wherever the mouse cursor currently is`],
+       ["C",`The top-right corner of the window`],
+       ["D",`It cannot be determined without glTranslatef()`]], ans:"A",
+ explanation:`glRasterPos2f(0.0, 0.0) sets the current raster position to (0.0, 0.0), which is where glutBitmapString() begins drawing the text.`},
+
+{id:"m3-window-1", type:"single", topic:"Window Initialization", difficulty:"Easy", source:"Module 3",
+ stem:`Which function initializes the GLUT library and should only be called once in a program?`,
+ opts:[["A",`glutCreateWindow()`],["B",`glutInit()`],["C",`glutInitWindowSize()`],["D",`glutMainLoop()`]], ans:"B",
+ explanation:`glutInit() initializes the GLUT library and should only be called once in a GLUT program.`},
+
+{id:"m3-window-2", type:"single", topic:"Window Initialization", difficulty:"Easy", source:"Module 3",
+ stem:`Which function sets the window's width and height before it is created?`,
+ opts:[["A",`glutInitWindowPosition()`],["B",`glutCreateWindow()`],["C",`glutInitWindowSize()`],["D",`glutFullScreen()`]], ans:"C",
+ explanation:`glutInitWindowSize(int width, int height) sets the window size prior to window creation.`},
+
+{id:"m3-window-3", type:"single", topic:"Window Initialization", difficulty:"Easy", source:"Module 3",
+ stem:`Which function creates a top-level window using the previously configured size and position?`,
+ opts:[["A",`glutCreateWindow(const char *title)`],["B",`glutInitWindowPosition()`],["C",`glutDisplayFunc()`],["D",`glutPostRedisplay()`]], ans:"A",
+ explanation:`glutCreateWindow(const char *title) creates a top-level window with the given title.`},
+
+{id:"m3-window-4", type:"single", topic:"Window Initialization", difficulty:"Medium", source:"Module 3",
+ stem:`What does glutFullScreen() do?`,
+ opts:[["A",`It requests that the current window be made full screen`],
+       ["B",`It closes the current window`],
+       ["C",`It initializes the GLUT library`],
+       ["D",`It sets the background color to black`]], ans:"A",
+ explanation:`glutFullScreen() requests that the current window be made full screen.`},
+
+{id:"m3-window-5", type:"single", topic:"Window Initialization", difficulty:"Medium", source:"Module 3",
+ stem:`When is glutPostRedisplay() most commonly used?`,
+ opts:[["A",`Inside callbacks, to mark the current window as needing to be redisplayed`],
+       ["B",`Only once at the very start of main()`],
+       ["C",`To permanently disable further redraws`],
+       ["D",`To resize the window to full screen`]], ans:"A",
+ explanation:`glutPostRedisplay() marks the current window as needing to be redisplayed, and is most often used inside callbacks such as keyboard or timer handlers.`},
+
+{id:"m3-input-1", type:"single", topic:"Input Handling", difficulty:"Easy", source:"Module 3",
+ stem:`Which function sets the display callback for the current window?`,
+ opts:[["A",`glutDisplayFunc()`],["B",`glutKeyboardFunc()`],["C",`glutMouseFunc()`],["D",`glutIdleFunc()`]], ans:"A",
+ explanation:`glutDisplayFunc() sets the display callback for the current window.`},
+
+{id:"m3-input-2", type:"single", topic:"Input Handling", difficulty:"Easy", source:"Module 3",
+ stem:`Which function registers a callback that responds to keyboard key presses?`,
+ opts:[["A",`glutMouseFunc()`],["B",`glutKeyboardFunc()`],["C",`glutMotionFunc()`],["D",`glutTimerFunc()`]], ans:"B",
+ explanation:`glutKeyboardFunc sets the keyboard callback for the current window.`},
+
+{id:"m3-input-3", type:"single", topic:"Input Handling", difficulty:"Medium", source:"Module 3",
+ stem:`What is the correct signature for a GLUT keyboard callback function?`,
+ opts:[["A",`void keyboardMonitor(unsigned char key, int x, int y)`],
+       ["B",`void keyboardMonitor(int key)`],
+       ["C",`void keyboardMonitor(char key, float x, float y)`],
+       ["D",`int keyboardMonitor(unsigned char key)`]], ans:"A",
+ explanation:`The module's keyboard callback uses the signature void keyboardMonitor(unsigned char key, int x, int y), where key is the pressed key and x, y are the mouse coordinates at the time of the key press.`},
+
+{id:"m3-input-4", type:"single", topic:"Input Handling", difficulty:"Medium", source:"Module 3",
+ stem:`In the sample keyboardMonitor() function, what happens when the 'a' key is pressed?`,
+ opts:[["A",`px is increased by 0.02f`],["B",`px is decreased by 0.02f`],["C",`py is increased by 0.02f`],["D",`The program exits`]], ans:"B",
+ explanation:`The case for 'a' executes px -= .02f, decreasing px, then breaks out of the switch statement.`},
+
+{id:"m3-input-5", type:"single", topic:"Input Handling", difficulty:"Medium", source:"Module 3",
+ stem:`In the same keyboardMonitor() function, what happens for any key other than 'a' or 'd'?`,
+ opts:[["A",`px is reset to 0.0f via the default case`],
+       ["B",`The program crashes`],
+       ["C",`py is decreased by 0.02f`],
+       ["D",`Nothing happens; the switch has no default case`]], ans:"A",
+ explanation:`The default case in the switch statement sets px = 0.0f for any key that isn't 'a' or 'd'.`},
+
+{id:"m3-input-6", type:"single", topic:"Input Handling", difficulty:"Medium", source:"Module 3",
+ stem:`Why does keyboardMonitor() call glutPostRedisplay() after updating px?`,
+ opts:[["A",`To mark the window as needing a redraw so the updated raster position is shown`],
+       ["B",`To reset px back to 0`],
+       ["C",`To close the GLUT window`],
+       ["D",`glutPostRedisplay() is required syntax and has no functional effect`]], ans:"A",
+ explanation:`Changing px alone does not redraw the screen; glutPostRedisplay() marks the window as needing to be redisplayed so the display callback runs again with the new position.`},
+
+{id:"m3-mouse-1", type:"single", topic:"Mouse Callbacks", difficulty:"Easy", source:"Module 3",
+ stem:`Which function sets the mouse button callback for the current window?`,
+ opts:[["A",`glutMouseFunc()`],["B",`glutMotionFunc()`],["C",`glutEntryFunc()`],["D",`glutPassiveMotionFunc()`]], ans:"A",
+ explanation:`glutMouseFunc() sets the mouse callback for the current window, triggered when mouse buttons are pressed or released.`},
+
+{id:"m3-mouse-2", type:"single", topic:"Mouse Callbacks", difficulty:"Medium", source:"Module 3",
+ stem:`Which constants can the button parameter of a GLUT mouse callback take?`,
+ opts:[["A",`GLUT_LEFT_BUTTON, GLUT_MIDDLE_BUTTON, or GLUT_RIGHT_BUTTON`],
+       ["B",`GLUT_UP or GLUT_DOWN`],
+       ["C",`GLUT_LEFT or GLUT_ENTERED`],
+       ["D",`GLUT_CLICK or GLUT_RELEASE`]], ans:"A",
+ explanation:`The button parameter is one of GLUT_LEFT_BUTTON, GLUT_MIDDLE_BUTTON, or GLUT_RIGHT_BUTTON.`},
+
+{id:"m3-mouse-3", type:"single", topic:"Mouse Callbacks", difficulty:"Medium", source:"Module 3",
+ stem:`Which constants can the state parameter of a GLUT mouse callback take?`,
+ opts:[["A",`GLUT_LEFT_BUTTON or GLUT_RIGHT_BUTTON`],["B",`GLUT_UP or GLUT_DOWN`],["C",`GLUT_ENTERED or GLUT_LEFT`],["D",`GLUT_TRUE or GLUT_FALSE`]], ans:"B",
+ explanation:`The state parameter of a mouse callback is either GLUT_UP or GLUT_DOWN, indicating whether the button was released or pressed.`},
+
+{id:"m3-mouse-4", type:"single", topic:"Mouse Callbacks", difficulty:"Medium", source:"Module 3",
+ stem:`In the sample mouseMonitor() function, what is printed when the left mouse button is pressed down?`,
+ opts:[["A",`"Left button was clicked..."`],["B",`"Left button was released..."`],["C",`"Right button was clicked..."`],["D",`"Middle button was clicked..."`]], ans:"A",
+ explanation:`When button == GLUT_LEFT_BUTTON and state == GLUT_DOWN, the function prints "Left button was clicked...".`},
+
+{id:"m3-mouse-5", type:"single", topic:"Mouse Callbacks", difficulty:"Medium", source:"Module 3",
+ stem:`What triggers the passive motion callback registered with glutPassiveMotionFunc()?`,
+ opts:[["A",`The mouse moving within the window while no mouse buttons are pressed`],
+       ["B",`The mouse moving within the window while a button is held down`],
+       ["C",`A keyboard key being pressed`],
+       ["D",`The window being resized`]], ans:"A",
+ explanation:`The passive motion callback is called when the mouse moves within the window while no mouse buttons are pressed, as opposed to glutMotionFunc() which fires during dragging.`},
+
+{id:"m3-mouse-6", type:"single", topic:"Mouse Callbacks", difficulty:"Medium", source:"Module 3",
+ stem:`Which function sets a callback for when the mouse pointer enters or leaves the window?`,
+ opts:[["A",`glutEntryFunc()`],["B",`glutMouseFunc()`],["C",`glutMotionFunc()`],["D",`glutIdleFunc()`]], ans:"A",
+ explanation:`glutEntryFunc sets the mouse enter/leave callback for the current window.`},
+
+{id:"m3-mouse-7", type:"single", topic:"Mouse Callbacks", difficulty:"Medium", source:"Module 3",
+ stem:`In a glutEntryFunc() callback, what does a state value of GLUT_LEFT indicate?`,
+ opts:[["A",`The mouse pointer last left the window`],["B",`The mouse pointer last entered the window`],["C",`The left mouse button was clicked`],["D",`The left arrow key was pressed`]], ans:"A",
+ explanation:`The state parameter is GLUT_LEFT if the mouse pointer last left the window, or GLUT_ENTERED if it last entered the window.`},
+
+{id:"m3-timer-1", type:"single", topic:"Idle and Timer Callbacks", difficulty:"Medium", source:"Module 3",
+ stem:`What is the purpose of glutIdleFunc()?`,
+ opts:[["A",`It sets the global idle callback so a GLUT program can perform background processing or continuous animation when no window events are being received`],
+       ["B",`It pauses the entire GLUT program indefinitely`],
+       ["C",`It registers a one-time callback triggered after a delay`],
+       ["D",`It disables all mouse input`]], ans:"A",
+ explanation:`glutIdleFunc sets the global idle callback, letting a GLUT program perform background processing tasks or continuous animation when window system events aren't being received.`},
+
+{id:"m3-timer-2", type:"single", topic:"Idle and Timer Callbacks", difficulty:"Medium", source:"Module 3",
+ stem:`What does glutTimerFunc() do?`,
+ opts:[["A",`It registers a timer callback to be triggered after a specified number of milliseconds`],
+       ["B",`It sets the frame rate of the application permanently`],
+       ["C",`It measures how long the program has been running`],
+       ["D",`It is identical in behavior to glutIdleFunc()`]], ans:"A",
+ explanation:`glutTimerFunc registers a timer callback to be triggered in a specified number of milliseconds.`},
+
+{id:"m3-timer-3", type:"single", topic:"Idle and Timer Callbacks", difficulty:"Medium", source:"Module 3",
+ stem:`In the sample program, what does animateString(int value) do when value equals 1?`,
+ opts:[["A",`px is increased by 0.02 and glutPostRedisplay() is called`],
+       ["B",`px is decreased by 0.02 and glutPostRedisplay() is called`],
+       ["C",`py is increased by 0.02`],
+       ["D",`The program exits`]], ans:"A",
+ explanation:`When value == 1, the function runs px += 0.02, then calls glutPostRedisplay() to request a redraw with the updated position.`},
+
+{id:"m3-scenario-1", type:"single", topic:"Application Scenario", difficulty:"Hard", source:"Module 3",
+ stem:`A developer wants text that moves left when 'a' is pressed and right when 'd' is pressed, redrawing after each key press. Which two functions together make this behavior work?`,
+ opts:[["A",`glutKeyboardFunc() to register the key handler, and glutPostRedisplay() inside it to trigger a redraw`],
+       ["B",`glutMouseFunc() and glutIdleFunc()`],
+       ["C",`glutEntryFunc() and glutTimerFunc()`],
+       ["D",`glutInit() and glutCreateWindow()`]], ans:"A",
+ explanation:`glutKeyboardFunc() registers the callback that updates the raster position variables, and calling glutPostRedisplay() inside that callback is what causes the display function to redraw with the new position.`},
+
+{id:"m3-scenario-2", type:"single", topic:"Application Scenario", difficulty:"Hard", source:"Module 3",
+ stem:`A program calls glutBitmapString() but the text never appears on screen, even though glColor3f() and glRasterPos2f() are both called correctly beforehand. Which missing call is the most likely cause?`,
+ opts:[["A",`glFlush()`],["B",`glutInitWindowPosition()`],["C",`glutMouseFunc()`],["D",`glColor4f()`]], ans:"A",
+ explanation:`Without glFlush() (or an equivalent buffer swap), previously issued OpenGL drawing commands, including the bitmap text, may never actually be executed or displayed.`},
+
+{id:"m3-debug-1", type:"single", topic:"Troubleshooting", difficulty:"Hard", source:"Module 3",
+ stem:`A program uses drawBitmapString(), a freeglut extension function, but fails to compile with an "undeclared identifier" error. What is the most likely cause?`,
+ opts:[["A",`The freeglut extension header was not included in the code`],
+       ["B",`glColor3f() was called in the wrong order`],
+       ["C",`The window size was set incorrectly`],
+       ["D",`glutMainLoop() was never called`]], ans:"A",
+ explanation:`drawBitmapString() is a freeglut extension, so its header must be included; omitting it causes the compiler to not recognize the function.`},
+
+// ---- Code-blank questions ----
+{id:"m3-code-1", type:"code_blank", topic:"Text Rendering", difficulty:"Medium", source:"Module 3 code sample",
+ stem:`Complete the missing statement that sets the text color to blue before drawing.`,
+ code:`void textSample(){
+    glClear(GL_COLOR_BUFFER_BIT);
+    const unsigned char str[100] = {"FEU-TECH"};
+    __BLANK_1__
+    glRasterPos2f(0.0, 0.0);
+    glutBitmapString(GLUT_BITMAP_HELVETICA_18, str);
+    glFlush();
+}`,
+ blanks:[{id:1, answer:`glColor3f(0.0f, 0.0f, 1.0f);`, accepted:[`glColor3f(0.0f,0.0f,1.0f);`,`glColor3f(0.0f, 0.0f, 1.0f)`], caseSensitive:true}],
+ explanation:`glColor3f(0.0f, 0.0f, 1.0f) sets the current color to blue, and must be set before the raster position for the text to be drawn in that color.`},
+
+{id:"m3-code-2", type:"code_blank", topic:"Text Rendering", difficulty:"Medium", source:"Module 3 code sample",
+ stem:`Complete the missing statement that sets the raster position to the origin.`,
+ code:`void textSample(){
+    glClear(GL_COLOR_BUFFER_BIT);
+    const unsigned char str[100] = {"FEU-TECH"};
+    glColor3f(0.0f, 0.0f, 1.0f);
+    __BLANK_1__
+    glutBitmapString(GLUT_BITMAP_HELVETICA_18, str);
+    glFlush();
+}`,
+ blanks:[{id:1, answer:`glRasterPos2f(0.0, 0.0);`, accepted:[`glRasterPos2f(0.0,0.0);`,`glRasterPos2f(0.0f, 0.0f);`,`glRasterPos2f(0.0f,0.0f);`,`glRasterPos2f(0, 0);`], caseSensitive:true}],
+ explanation:`glRasterPos2f(0.0, 0.0) sets the current raster position to the origin, where the bitmap text will begin.`},
+
+{id:"m3-code-3", type:"code_blank", topic:"Text Rendering", difficulty:"Medium", source:"Module 3 code sample",
+ stem:`Complete the missing statement that renders the string using the Helvetica 18 bitmap font.`,
+ code:`void textSample(){
+    glClear(GL_COLOR_BUFFER_BIT);
+    const unsigned char str[100] = {"FEU-TECH"};
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glRasterPos2f(0.0, 0.0);
+    __BLANK_1__
+    glFlush();
+}`,
+ blanks:[{id:1, answer:`glutBitmapString(GLUT_BITMAP_HELVETICA_18, str);`, accepted:[`glutBitmapString(GLUT_BITMAP_HELVETICA_18,str);`], caseSensitive:true}],
+ explanation:`glutBitmapString(GLUT_BITMAP_HELVETICA_18, str) renders the string str at the current raster position using the Helvetica 18 bitmap font.`},
+
+{id:"m3-code-4", type:"code_blank", topic:"Window Initialization", difficulty:"Medium", source:"Module 3 code sample",
+ stem:`Complete the two missing statements that initialize GLUT and set the window size.`,
+ code:`int main(int argc, char **argv){
+    __BLANK_1__
+    __BLANK_2__
+    glutInitWindowPosition(200,50);
+    glutCreateWindow("My First OpenGL");
+    glutDisplayFunc(defaultDisplay);
+    glutKeyboardFunc(keyboardMonitor);
+    glutMainLoop();
+    return 0;
+}`,
+ blanks:[
+   {id:1, answer:`glutInit(&argc, argv);`, accepted:[`glutInit(&argc,argv);`], caseSensitive:true},
+   {id:2, answer:`glutInitWindowSize(1024,768);`, accepted:[`glutInitWindowSize(1024, 768);`], caseSensitive:true}
+ ],
+ explanation:`glutInit(&argc, argv) initializes GLUT first, then glutInitWindowSize(1024,768) sets the window dimensions before the window is created.`},
+
+{id:"m3-code-5", type:"code_blank", topic:"Input Handling", difficulty:"Medium", source:"Module 3 code sample",
+ stem:`Complete the missing statement that registers the keyboard callback function.`,
+ code:`int main(int argc, char **argv){
+    glutInit(&argc, argv);
+    glutInitWindowSize(1024,768);
+    glutInitWindowPosition(200,50);
+    glutCreateWindow("My First OpenGL");
+    glutDisplayFunc(defaultDisplay);
+    __BLANK_1__
+    glutMainLoop();
+    return 0;
+}`,
+ blanks:[{id:1, answer:`glutKeyboardFunc(keyboardMonitor);`, accepted:[], caseSensitive:true}],
+ explanation:`glutKeyboardFunc(keyboardMonitor) registers keyboardMonitor as the callback invoked whenever a key is pressed.`},
+
+{id:"m3-code-6", type:"code_blank", topic:"Input Handling", difficulty:"Hard", source:"Module 3 code sample",
+ stem:`Complete the missing parameter list for the keyboard callback function signature.`,
+ code:`void keyboardMonitor__BLANK_1__{
+    cout << key << endl;
+    switch(key){
+        case 'a':
+            px -= .02f;
+            break;
+        case 'd':
+            px += .02f;
+            break;
+        default:
+            px=0.0f;
+    }
+    glutPostRedisplay();
+}`,
+ blanks:[{id:1, answer:`(unsigned char key, int x, int y)`, accepted:[], caseSensitive:true}],
+ explanation:`GLUT keyboard callbacks require the signature (unsigned char key, int x, int y), where key is the character pressed and x, y are the mouse coordinates at that moment.`},
+
+{id:"m3-code-7", type:"code_blank", topic:"Input Handling", difficulty:"Medium", source:"Module 3 code sample",
+ stem:`Complete the missing statement that decreases px when 'a' is pressed.`,
+ code:`void keyboardMonitor(unsigned char key, int x, int y){
+    cout << key << endl;
+    switch(key){
+        case 'a':
+            __BLANK_1__
+            break;
+        case 'd':
+            px += .02f;
+            break;
+        default:
+            px=0.0f;
+    }
+    glutPostRedisplay();
+}`,
+ blanks:[{id:1, answer:`px -= .02f;`, accepted:[`px -= 0.02f;`,`px-=.02f;`], caseSensitive:true}],
+ explanation:`px -= .02f decreases px by 0.02, moving the raster position (and text) to the left.`},
+
+{id:"m3-code-8", type:"code_blank", topic:"Input Handling", difficulty:"Medium", source:"Module 3 code sample",
+ stem:`Complete the missing statement that requests a redraw after the key handler updates px.`,
+ code:`void keyboardMonitor(unsigned char key, int x, int y){
+    cout << key << endl;
+    switch(key){
+        case 'a':
+            px -= .02f;
+            break;
+        case 'd':
+            px += .02f;
+            break;
+        default:
+            px=0.0f;
+    }
+    __BLANK_1__
+}`,
+ blanks:[{id:1, answer:`glutPostRedisplay();`, accepted:[`glutPostRedisplay()`], caseSensitive:true}],
+ explanation:`glutPostRedisplay() marks the window as needing to be redisplayed, so the updated px value is reflected on screen.`},
+
+{id:"m3-code-9", type:"code_blank", topic:"Mouse Callbacks", difficulty:"Medium", source:"Module 3 code sample",
+ stem:`Complete the missing condition that checks whether the left mouse button was pressed down.`,
+ code:`void mouseMonitor(int button, int state, int x, int y){
+    if(button == GLUT_LEFT_BUTTON){
+        if( __BLANK_1__ )
+            cout << "Left button was clicked..." << endl;
+        else
+            cout << "Left button was released..." << endl;
+    }else if(button == GLUT_RIGHT_BUTTON){
+        cout << "Right button was clicked..." << endl;
+    }else{
+        cout << "Middle button was clicked..." << endl;
+    }
+    cout << x << " " << y << endl;
+}`,
+ blanks:[{id:1, answer:`state == GLUT_DOWN`, accepted:[], caseSensitive:true}],
+ explanation:`state == GLUT_DOWN checks whether the button is currently being pressed, as opposed to GLUT_UP for a release.`},
+
+{id:"m3-code-10", type:"code_blank", topic:"Mouse Callbacks", difficulty:"Medium", source:"Module 3 code sample",
+ stem:`Complete the missing statement that registers the mouse button callback.`,
+ code:`glutCreateWindow("My First OpenGL");
+glutDisplayFunc(defaultDisplay);
+glutKeyboardFunc(keyboardMonitor);
+__BLANK_1__
+glutMotionFunc(detectMotion);
+glutPassiveMotionFunc(detectPassiveMotion);
+glutEntryFunc(mouseEntryDetector);
+glutMainLoop();`,
+ blanks:[{id:1, answer:`glutMouseFunc(mouseMonitor);`, accepted:[], caseSensitive:true}],
+ explanation:`glutMouseFunc(mouseMonitor) registers mouseMonitor as the callback invoked when mouse buttons are pressed or released.`},
+
+{id:"m3-code-11", type:"code_blank", topic:"Idle and Timer Callbacks", difficulty:"Medium", source:"Module 3 code sample",
+ stem:`Complete the missing statement inside animateString() that moves px forward and requests a redraw.`,
+ code:`void animateString(int value){
+    if(value==1){
+        px += 0.02;
+    }else{
+        px -= 0.02;
+    }
+    __BLANK_1__
+}`,
+ blanks:[{id:1, answer:`glutPostRedisplay();`, accepted:[`glutPostRedisplay()`], caseSensitive:true}],
+ explanation:`glutPostRedisplay() is called after updating px so the window redraws the text at its new position.`},
+
+{id:"m3-code-12", type:"code_blank", topic:"Text Rendering", difficulty:"Medium", source:"Module 3 code sample",
+ stem:`Complete the missing statement that flushes drawing commands so the text becomes visible.`,
+ code:`void defaultDisplay(){
+    glClear(GL_COLOR_BUFFER_BIT);
+    const unsigned char str[100] = "FEU-TECH";
+    glColor3f(0.0f,0.0f,1.0f);
+    glRasterPos2f(px,py);
+    glutBitmapString(GLUT_BITMAP_HELVETICA_18, str);
+    __BLANK_1__
+}`,
+ blanks:[{id:1, answer:`glFlush();`, accepted:[`glFlush()`], caseSensitive:true}],
+ explanation:`glFlush() forces previously buffered OpenGL commands, including the text drawing, to execute so it appears on screen.`}
+
+  ]
+},
+
+"module4b": {
+  title: "Module 4 — Vertex Arrays and Indexed Rendering",
+  questions: [
+
+{id:"m4b-va-1", type:"single", topic:"Vertex Arrays Overview", difficulty:"Easy", source:"Module 4",
+ stem:`What do vertex arrays allow an application to do?`,
+ opts:[["A",`Render primitives from vertex and vertex state data stored in blocks of memory`],
+       ["B",`Compile shaders at runtime`],
+       ["C",`Automatically generate texture coordinates`],
+       ["D",`Replace the need for a graphics card`]], ans:"A",
+ explanation:`Vertex arrays allow applications to render primitives from vertex and vertex state data stored in blocks of memory.`},
+
+{id:"m4b-va-2", type:"single", topic:"Vertex Arrays Overview", difficulty:"Medium", source:"Module 4",
+ stem:`What benefit does OpenGL gain by processing vertices through vertex arrays rather than one glVertex call at a time?`,
+ opts:[["A",`It can process the vertices and cache the results for efficient reuse`],
+       ["B",`It eliminates the need for a display callback`],
+       ["C",`It removes the need to specify a primitive mode`],
+       ["D",`It automatically converts 2D primitives into 3D`]], ans:"A",
+ explanation:`Vertex arrays let OpenGL process the vertices and cache the results for efficient reuse, unlike issuing individual glVertex calls between glBegin/glEnd.`},
+
+{id:"m4b-buf-1", type:"single", topic:"Buffer Objects", difficulty:"Medium", source:"Module 4",
+ stem:`Which OpenGL version introduced the buffer object feature?`,
+ opts:[["A",`1.0`],["B",`1.5`],["C",`2.0`],["D",`3.0`]], ans:"B",
+ explanation:`Version 1.5 introduced the buffer object feature, allowing applications to store data in high-performance server memory.`},
+
+{id:"m4b-buf-2", type:"single", topic:"Buffer Objects", difficulty:"Medium", source:"Module 4",
+ stem:`Where does the buffer object feature allow an application to store vertex data?`,
+ opts:[["A",`High-performance server memory`],["B",`The window's title bar`],["C",`The mouse driver`],["D",`The CPU's L1 cache exclusively`]], ans:"A",
+ explanation:`Buffer objects allow applications to store data in high-performance server memory, which the graphics hardware can access more efficiently.`},
+
+{id:"m4b-type-1", type:"single", topic:"OpenGL Data Types", difficulty:"Easy", source:"Module 4",
+ stem:`Which OpenGL type definition corresponds to a 32-bit floating-point value?`,
+ opts:[["A",`GLbyte`],["B",`GLint`],["C",`GLfloat`],["D",`GLdouble`]], ans:"C",
+ explanation:`GLfloat is the OpenGL type definition for a 32-bit floating-point value, typically corresponding to the C float type.`},
+
+{id:"m4b-type-2", type:"single", topic:"OpenGL Data Types", difficulty:"Medium", source:"Module 4",
+ stem:`Which OpenGL type is used for an 8-bit unsigned integer, such as index values in glDrawElements()?`,
+ opts:[["A",`GLubyte`],["B",`GLbyte`],["C",`GLshort`],["D",`GLuint`]], ans:"A",
+ explanation:`GLubyte is the OpenGL type for an 8-bit unsigned integer, corresponding to the C unsigned char type.`},
+
+{id:"m4b-vp-1", type:"single", topic:"glVertexPointer()", difficulty:"Medium", source:"Module 4",
+ stem:`In glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer), what does the size parameter specify?`,
+ opts:[["A",`The number of coordinates per vertex, which must be 2, 3, or 4`],
+       ["B",`The total number of vertices in the array`],
+       ["C",`The number of bytes in the entire array`],
+       ["D",`The number of primitives to draw`]], ans:"A",
+ explanation:`size specifies the number of coordinates per vertex and must be 2, 3, or 4; the initial value is 4.`},
+
+{id:"m4b-vp-2", type:"single", topic:"glVertexPointer()", difficulty:"Medium", source:"Module 4",
+ stem:`What does the type parameter of glVertexPointer() specify?`,
+ opts:[["A",`The data type of each coordinate in the array, such as GL_FLOAT`],
+       ["B",`The drawing mode, such as GL_TRIANGLES`],
+       ["C",`Whether client state is enabled`],
+       ["D",`The number of vertices to skip`]], ans:"A",
+ explanation:`type specifies the data type of each coordinate in the array; accepted symbolic constants include GL_SHORT, GL_INT, GL_FLOAT, or GL_DOUBLE.`},
+
+{id:"m4b-vp-3", type:"single", topic:"glVertexPointer()", difficulty:"Medium", source:"Module 4",
+ stem:`What does the stride parameter of glVertexPointer() specify?`,
+ opts:[["A",`The byte offset between consecutive vertices; if 0, the vertices are tightly packed`],
+       ["B",`The number of vertices per primitive`],
+       ["C",`The total size of the array in bytes`],
+       ["D",`The starting index of the array`]], ans:"A",
+ explanation:`stride specifies the byte offset between consecutive vertices; a stride of 0 means the vertices are understood to be tightly packed in the array.`},
+
+{id:"m4b-vp-4", type:"single", topic:"glVertexPointer()", difficulty:"Medium", source:"Module 4",
+ stem:`What does the pointer parameter of glVertexPointer() specify?`,
+ opts:[["A",`A pointer to the first coordinate of the first vertex in the array`],
+       ["B",`A pointer to the color array`],
+       ["C",`A pointer to the index array`],
+       ["D",`A pointer to the current display callback`]], ans:"A",
+ explanation:`pointer specifies a pointer to the first coordinate of the first vertex in the array.`},
+
+{id:"m4b-cs-1", type:"single", topic:"Client State", difficulty:"Easy", source:"Module 4",
+ stem:`Which client-state constant must be enabled before glVertexPointer() data will be used for drawing?`,
+ opts:[["A",`GL_VERTEX_ARRAY`],["B",`GL_COLOR_ARRAY`],["C",`GL_NORMAL_ARRAY`],["D",`GL_TEXTURE_ARRAY`]], ans:"A",
+ explanation:`GL_VERTEX_ARRAY must be enabled with glEnableClientState() before the array supplied via glVertexPointer() is used for rendering.`},
+
+{id:"m4b-cs-2", type:"single", topic:"Client State", difficulty:"Easy", source:"Module 4",
+ stem:`Which function enables a client-side capability such as GL_VERTEX_ARRAY or GL_COLOR_ARRAY?`,
+ opts:[["A",`glEnableClientState()`],["B",`glEnable()`],["C",`glActivate()`],["D",`glVertexPointer()`]], ans:"A",
+ explanation:`glEnableClientState() enables client-side capabilities such as GL_VERTEX_ARRAY and GL_COLOR_ARRAY.`},
+
+{id:"m4b-cs-3", type:"single", topic:"Client State", difficulty:"Easy", source:"Module 4",
+ stem:`Which function should be called after drawing is finished, to turn off a client-side array state such as GL_VERTEX_ARRAY?`,
+ opts:[["A",`glDisableClientState()`],["B",`glDisable()`],["C",`glClear()`],["D",`glFlush()`]], ans:"A",
+ explanation:`glDisableClientState() disables a previously enabled client-side capability, such as GL_VERTEX_ARRAY, after drawing.`},
+
+{id:"m4b-cp-1", type:"single", topic:"glColorPointer()", difficulty:"Medium", source:"Module 4",
+ stem:`Which client state must be enabled for glColorPointer() data to actually affect rendered colors?`,
+ opts:[["A",`GL_COLOR_ARRAY`],["B",`GL_VERTEX_ARRAY`],["C",`GL_INDEX_ARRAY`],["D",`GL_EDGE_FLAG_ARRAY`]], ans:"A",
+ explanation:`GL_COLOR_ARRAY must be enabled via glEnableClientState() for the array supplied to glColorPointer() to be used during drawing.`},
+
+{id:"m4b-da-1", type:"single", topic:"glDrawArrays()", difficulty:"Medium", source:"Module 4",
+ stem:`In glDrawArrays(GLenum mode, GLint first, GLsizei count), what does first specify?`,
+ opts:[["A",`The starting index in the enabled arrays`],["B",`The primitive mode to draw`],["C",`The number of coordinates per vertex`],["D",`The stride between vertices`]], ans:"A",
+ explanation:`first specifies the starting index in the enabled arrays from which to begin reading vertex data.`},
+
+{id:"m4b-da-2", type:"single", topic:"glDrawArrays()", difficulty:"Medium", source:"Module 4",
+ stem:`In glDrawArrays(), what does count specify?`,
+ opts:[["A",`The number of indices (vertices) to be rendered`],["B",`The number of colors defined`],["C",`The byte size of the vertex array`],["D",`The window width in pixels`]], ans:"A",
+ explanation:`count specifies the number of indices (effectively, vertices) to be rendered starting from first.`},
+
+{id:"m4b-da-3", type:"single", topic:"glDrawArrays()", difficulty:"Easy", source:"Module 4",
+ stem:`Which of the following is a valid mode value accepted by glDrawArrays()?`,
+ opts:[["A",`GL_TRIANGLES`],["B",`GL_VERTEX_ARRAY`],["C",`GL_FLOAT`],["D",`GL_UNSIGNED_BYTE`]], ans:"A",
+ explanation:`glDrawArrays() accepts primitive mode constants such as GL_POINTS, GL_LINES, GL_TRIANGLES, GL_QUADS, and similar, but not client-state or data-type constants.`},
+
+{id:"m4b-code-read-1", type:"single", topic:"Code Reading", difficulty:"Medium", source:"Module 4",
+ stem:`Given:
+
+GLfloat trianglevertex[] = {
+    0.0f, .75f, 0.0f,
+    -0.75f, 0.0f, 0.0f,
+    0.75f, 0.0f, 0.0f
+};
+glEnableClientState(GL_VERTEX_ARRAY);
+glVertexPointer(3, GL_FLOAT, 0, trianglevertex);
+glDrawArrays(GL_TRIANGLES, 0, 3);
+glDisableClientState(GL_VERTEX_ARRAY);
+
+How many vertices does glDrawArrays() render here, and what shape results?`,
+ opts:[["A",`3 vertices, forming one triangle`],["B",`6 vertices, forming two triangles`],["C",`3 vertices, forming a line`],["D",`9 vertices, forming three triangles`]], ans:"A",
+ explanation:`count is 3, and with GL_TRIANGLES, every group of 3 vertices forms one triangle, so exactly one triangle is drawn.`},
+
+{id:"m4b-code-read-2", type:"single", topic:"Code Reading", difficulty:"Hard", source:"Module 4",
+ stem:`Given the "additional vertices for the 2nd triangle" pattern from the module, where trianglevertex[] holds 6 sets of x,y,z values and:
+
+glDrawArrays(GL_TRIANGLES, 0, 6);
+
+how many triangles are rendered?`,
+ opts:[["A",`1`],["B",`2`],["C",`3`],["D",`6`]], ans:"B",
+ explanation:`With count set to 6 and mode GL_TRIANGLES, floor(6 / 3) = 2 triangles are rendered from the 6 stored vertices.`},
+
+{id:"m4b-code-read-3", type:"single", topic:"Code Reading", difficulty:"Hard", source:"Module 4",
+ stem:`In the displayTriangles() function:
+
+glEnableClientState(GL_VERTEX_ARRAY);
+glEnableClientState(GL_COLOR_ARRAY);
+glColorPointer(3, GL_FLOAT, 0, colors);
+glVertexPointer(3, GL_FLOAT, 0, trianglevertices);
+glDrawArrays(GL_TRIANGLES, 0, 12);
+glDisableClientState(GL_VERTEX_ARRAY);
+glDisableClientState(GL_COLOR_ARRAY);
+
+how many triangles does this call draw?`,
+ opts:[["A",`4`],["B",`12`],["C",`3`],["D",`6`]], ans:"A",
+ explanation:`floor(12 / 3) = 4 triangles are drawn from the 12 vertices supplied, matching the module's four directional triangles (left, right, up, down).`},
+
+{id:"m4b-debug-1", type:"single", topic:"Troubleshooting", difficulty:"Hard", source:"Module 4",
+ stem:`A program calls glVertexPointer() and glDrawArrays(GL_TRIANGLES, 0, 3), but nothing is drawn. glEnableClientState(GL_VERTEX_ARRAY) was never called. What is the most likely cause of the missing output?`,
+ opts:[["A",`GL_VERTEX_ARRAY client state was never enabled, so the vertex array is not used`],
+       ["B",`GL_TRIANGLES is not a valid primitive mode`],
+       ["C",`glDrawArrays() only works with GL_QUADS`],
+       ["D",`glVertexPointer() automatically enables the vertex array`]], ans:"A",
+ explanation:`glVertexPointer() only specifies where the data is; GL_VERTEX_ARRAY must also be enabled with glEnableClientState() for that data to be used when drawing.`},
+
+{id:"m4b-debug-2", type:"single", topic:"Troubleshooting", difficulty:"Hard", source:"Module 4",
+ stem:`A triangle vertex array has 9 floats (3 vertices), but glDrawArrays(GL_TRIANGLES, 0, 4) is called. What is the most likely problem?`,
+ opts:[["A",`count is too large for the data available, since only 3 vertices exist but 4 were requested`],
+       ["B",`GL_TRIANGLES requires exactly 4 vertices`],
+       ["C",`first should be 4 instead of 0`],
+       ["D",`glDrawArrays() cannot be used with GLfloat arrays`]], ans:"A",
+ explanation:`The array only contains 3 vertices (9 floats at size 3), so requesting count = 4 reads past the end of the valid vertex data, which is a common source of rendering errors or artifacts.`},
+
+{id:"m4b-debug-3", type:"single", topic:"Troubleshooting", difficulty:"Hard", source:"Module 4",
+ stem:`A program enables both GL_VERTEX_ARRAY and GL_COLOR_ARRAY, but each vertex renders in the wrong color compared to what was intended. The colors[] array has 4 colors, but trianglevertices[] has 3 vertices. What is the likely issue?`,
+ opts:[["A",`The color array does not have a matching entry for each vertex, so the data is misaligned`],
+       ["B",`glColorPointer() cannot use GL_FLOAT`],
+       ["C",`glDrawArrays() ignores the color array entirely`],
+       ["D",`GL_COLOR_ARRAY must be enabled before GL_VERTEX_ARRAY`]], ans:"A",
+ explanation:`For correct results, the color array should provide one color entry per vertex; a mismatched count between colors[] and the vertex array misaligns colors with vertices.`},
+
+{id:"m4b-de-1", type:"single", topic:"glDrawElements()", difficulty:"Medium", source:"Module 4",
+ stem:`What is the key difference between glDrawArrays() and glDrawElements()?`,
+ opts:[["A",`glDrawElements() renders vertices in the order given by an index array, allowing vertex reuse, while glDrawArrays() reads vertices sequentially`],
+       ["B",`glDrawElements() cannot draw triangles`],
+       ["C",`glDrawArrays() requires a color array and glDrawElements() does not`],
+       ["D",`There is no meaningful difference between the two`]], ans:"A",
+ explanation:`glDrawElements() uses an index array to determine which vertices to draw and in what order, enabling vertex reuse, whereas glDrawArrays() simply reads vertices sequentially from first to first+count.`},
+
+{id:"m4b-de-2", type:"single", topic:"glDrawElements()", difficulty:"Medium", source:"Module 4",
+ stem:`In glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices), what does count specify?`,
+ opts:[["A",`The number of elements (indices) to be rendered`],["B",`The number of vertices in the vertex array`],["C",`The stride between indices`],["D",`The size of each index in bits`]], ans:"A",
+ explanation:`count specifies the number of elements to be rendered, i.e. how many entries of the indices array to read.`},
+
+{id:"m4b-de-3", type:"single", topic:"glDrawElements()", difficulty:"Medium", source:"Module 4",
+ stem:`In glDrawElements(), what does the type parameter specify?`,
+ opts:[["A",`The data type of the values in indices, such as GL_UNSIGNED_BYTE`],
+       ["B",`The primitive mode`],
+       ["C",`The data type of the vertex coordinates`],
+       ["D",`The number of coordinates per vertex`]], ans:"A",
+ explanation:`type specifies the type of the values in indices, and must be one of GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT, or GL_UNSIGNED_INT.`},
+
+{id:"m4b-de-4", type:"single", topic:"glDrawElements()", difficulty:"Medium", source:"Module 4",
+ stem:`Given the indexed pattern:
+
+GLubyte indices[] = {0, 1, 2};
+glEnableClientState(GL_VERTEX_ARRAY);
+glVertexPointer(3, GL_FLOAT, 0, vertices);
+glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, indices);
+glDisableClientState(GL_VERTEX_ARRAY);
+
+what does the GL_UNSIGNED_BYTE argument describe?`,
+ opts:[["A",`The data type of the values stored in the indices array`],["B",`The data type of the vertices array`],["C",`The primitive being drawn`],["D",`The size of each vertex in bytes`]], ans:"A",
+ explanation:`GL_UNSIGNED_BYTE here is the type parameter of glDrawElements(), describing the data type of the entries in the indices array.`},
+
+{id:"m4b-de-5", type:"single", topic:"glDrawElements()", difficulty:"Hard", source:"Module 4",
+ stem:`Why is indexed rendering with glDrawElements() often more efficient than plain glDrawArrays() for shared geometry?`,
+ opts:[["A",`Because shared vertices can be reused through indices rather than being duplicated in the vertex array`],
+       ["B",`Because glDrawElements() does not require glVertexPointer()`],
+       ["C",`Because glDrawElements() ignores the stride parameter`],
+       ["D",`Because indexed rendering always uses fewer primitives`]], ans:"A",
+ explanation:`Indexed drawing lets vertices shared by multiple primitives be stored once and referenced multiple times via the indices array, avoiding duplicate vertex data.`},
+
+{id:"m4b-conv-1", type:"single", topic:"Converting Immediate Mode", difficulty:"Medium", source:"Module 4",
+ stem:`When converting immediate-mode drawing (glBegin/glEnd with repeated glVertex2f calls) to vertex arrays, what is the first typical step?`,
+ opts:[["A",`Initialize an array holding the vertex coordinates`],
+       ["B",`Call glDrawArrays() immediately`],
+       ["C",`Disable GL_VERTEX_ARRAY`],
+       ["D",`Call glFlush() before defining any data`]], ans:"A",
+ explanation:`The module's conversion example first initializes an array (e.g., trianglevertex[]) holding the vertex coordinates, before enabling client state and setting the pointer.`},
+
+{id:"m4b-conv-2", type:"single", topic:"Converting Immediate Mode", difficulty:"Medium", source:"Module 4",
+ stem:`After glVertexPointer() and glDrawArrays() have been called for a vertex array, what should be done once drawing is complete?`,
+ opts:[["A",`Call glDisableClientState(GL_VERTEX_ARRAY) to deactivate the vertex array`],
+       ["B",`Call glVertexPointer() again with null arguments`],
+       ["C",`Nothing further is required`],
+       ["D",`Call glBegin() to close the array`]], ans:"A",
+ explanation:`The module's conversion steps end with glDisableClientState(GL_VERTEX_ARRAY) to deactivate the vertex array after drawing.`},
+
+// ---- Code-blank questions ----
+{id:"m4b-code-1", type:"code_blank", topic:"Vertex Arrays", difficulty:"Medium", source:"Module 4 code sample",
+ stem:`Complete the missing array declaration holding the triangle's vertex coordinates.`,
+ code:`void triangle(){
+    //1. initialize an array holding vertex coordinates
+    __BLANK_1__ trianglevertex[] = {
+        0.0f, .75f, 0.0f,
+        -0.75f, 0.0f, 0.0f,
+        0.75f, 0.0f, 0.0f
+    };
+
+    //2. activate and specify pointer to vertex array
+    glEnableClientState(GL_VERTEX_ARRAY);
+
+    //3. specify the pointer to vertex array
+    glVertexPointer(3, GL_FLOAT, 0, trianglevertex);
+
+    //4. execute drawArrays
+    glDrawArrays(GL_TRIANGLES,0,3);
+
+    //5. deactivate vertex array after drawing
+    glDisableClientState(GL_VERTEX_ARRAY);
+}`,
+ blanks:[{id:1, answer:`GLfloat`, accepted:[], caseSensitive:true}],
+ explanation:`GLfloat is the OpenGL type used for 32-bit floating-point vertex coordinate data.`},
+
+{id:"m4b-code-2", type:"code_blank", topic:"Vertex Arrays", difficulty:"Medium", source:"Module 4 code sample",
+ stem:`Complete the missing statement that enables the vertex array client state.`,
+ code:`void triangle(){
+    GLfloat trianglevertex[] = {
+        0.0f, .75f, 0.0f,
+        -0.75f, 0.0f, 0.0f,
+        0.75f, 0.0f, 0.0f
+    };
+
+    //2. activate and specify pointer to vertex array
+    __BLANK_1__
+
+    //3. specify the pointer to vertex array
+    glVertexPointer(3, GL_FLOAT, 0, trianglevertex);
+
+    //4. execute drawArrays
+    glDrawArrays(GL_TRIANGLES,0,3);
+
+    //5. deactivate vertex array after drawing
+    glDisableClientState(GL_VERTEX_ARRAY);
+}`,
+ blanks:[{id:1, answer:`glEnableClientState(GL_VERTEX_ARRAY);`, accepted:[`glEnableClientState(GL_VERTEX_ARRAY)`], caseSensitive:true}],
+ explanation:`glEnableClientState(GL_VERTEX_ARRAY) must be called so the vertex array supplied afterward is actually used for rendering.`},
+
+{id:"m4b-code-3", type:"code_blank", topic:"Vertex Arrays", difficulty:"Medium", source:"Module 4 code sample",
+ stem:`Complete the missing statement that specifies the vertex pointer for this array.`,
+ code:`void triangle(){
+    GLfloat trianglevertex[] = {
+        0.0f, .75f, 0.0f,
+        -0.75f, 0.0f, 0.0f,
+        0.75f, 0.0f, 0.0f
+    };
+    glEnableClientState(GL_VERTEX_ARRAY);
+
+    //3. specify the pointer to vertex array
+    __BLANK_1__
+
+    //4. execute drawArrays
+    glDrawArrays(GL_TRIANGLES,0,3);
+    glDisableClientState(GL_VERTEX_ARRAY);
+}`,
+ blanks:[{id:1, answer:`glVertexPointer(3, GL_FLOAT, 0, trianglevertex);`, accepted:[`glVertexPointer(3,GL_FLOAT,0,trianglevertex);`], caseSensitive:true}],
+ explanation:`glVertexPointer(3, GL_FLOAT, 0, trianglevertex) tells OpenGL each vertex has 3 float coordinates, tightly packed (stride 0), starting at trianglevertex.`},
+
+{id:"m4b-code-4", type:"code_blank", topic:"Vertex Arrays", difficulty:"Medium", source:"Module 4 code sample",
+ stem:`Complete the missing statement that draws the 3 vertices as a triangle.`,
+ code:`void triangle(){
+    GLfloat trianglevertex[] = {
+        0.0f, .75f, 0.0f,
+        -0.75f, 0.0f, 0.0f,
+        0.75f, 0.0f, 0.0f
+    };
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, trianglevertex);
+
+    //4. execute drawArrays
+    __BLANK_1__
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+}`,
+ blanks:[{id:1, answer:`glDrawArrays(GL_TRIANGLES,0,3);`, accepted:[`glDrawArrays(GL_TRIANGLES, 0, 3);`], caseSensitive:true}],
+ explanation:`glDrawArrays(GL_TRIANGLES, 0, 3) draws one triangle using the 3 vertices starting at index 0.`},
+
+{id:"m4b-code-5", type:"code_blank", topic:"Vertex Arrays", difficulty:"Medium", source:"Module 4 code sample",
+ stem:`Complete the missing statement that deactivates the vertex array after drawing.`,
+ code:`void triangle(){
+    GLfloat trianglevertex[] = {
+        0.0f, .75f, 0.0f,
+        -0.75f, 0.0f, 0.0f,
+        0.75f, 0.0f, 0.0f
+    };
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, trianglevertex);
+    glDrawArrays(GL_TRIANGLES,0,3);
+
+    //5. deactivate vertex array after drawing
+    __BLANK_1__
+}`,
+ blanks:[{id:1, answer:`glDisableClientState(GL_VERTEX_ARRAY);`, accepted:[`glDisableClientState(GL_VERTEX_ARRAY)`], caseSensitive:true}],
+ explanation:`glDisableClientState(GL_VERTEX_ARRAY) turns off the vertex array client state after the draw call is complete.`},
+
+{id:"m4b-code-6", type:"code_blank", topic:"Color Arrays", difficulty:"Medium", source:"Module 4 code sample",
+ stem:`Complete the two missing statements that enable both the vertex and color array client states.`,
+ code:`void displayTriangles(){
+    __BLANK_1__
+    __BLANK_2__
+    glColorPointer(3, GL_FLOAT, 0, colors);
+    glVertexPointer(3, GL_FLOAT, 0, trianglevertices);
+    glDrawArrays(GL_TRIANGLES, 0, 12);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+}`,
+ blanks:[
+   {id:1, answer:`glEnableClientState(GL_VERTEX_ARRAY);`, accepted:[`glEnableClientState(GL_VERTEX_ARRAY)`], caseSensitive:true},
+   {id:2, answer:`glEnableClientState(GL_COLOR_ARRAY);`, accepted:[`glEnableClientState(GL_COLOR_ARRAY)`], caseSensitive:true}
+ ],
+ explanation:`Both GL_VERTEX_ARRAY and GL_COLOR_ARRAY must be enabled so the vertex and color data supplied afterward are both used when drawing.`},
+
+{id:"m4b-code-7", type:"code_blank", topic:"Color Arrays", difficulty:"Medium", source:"Module 4 code sample",
+ stem:`Complete the missing statement that draws 12 vertices as triangles using both vertex and color data.`,
+ code:`void displayTriangles(){
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
+    glColorPointer(3, GL_FLOAT, 0, colors);
+    glVertexPointer(3, GL_FLOAT, 0, trianglevertices);
+    __BLANK_1__
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+}`,
+ blanks:[{id:1, answer:`glDrawArrays(GL_TRIANGLES, 0, 12);`, accepted:[`glDrawArrays(GL_TRIANGLES,0,12);`], caseSensitive:true}],
+ explanation:`glDrawArrays(GL_TRIANGLES, 0, 12) draws floor(12/3) = 4 triangles using the enabled vertex and color arrays.`},
+
+{id:"m4b-code-8", type:"code_blank", topic:"Color Arrays", difficulty:"Medium", source:"Module 4 code sample",
+ stem:`Complete the missing statement that specifies the pointer to the color array.`,
+ code:`void displayTriangles(){
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
+    __BLANK_1__
+    glVertexPointer(3, GL_FLOAT, 0, trianglevertices);
+    glDrawArrays(GL_TRIANGLES, 0, 12);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+}`,
+ blanks:[{id:1, answer:`glColorPointer(3, GL_FLOAT, 0, colors);`, accepted:[`glColorPointer(3,GL_FLOAT,0,colors);`], caseSensitive:true}],
+ explanation:`glColorPointer(3, GL_FLOAT, 0, colors) specifies that each color has 3 float components, tightly packed, starting at the colors array.`},
+
+{id:"m4b-code-9", type:"code_blank", topic:"Indexed Rendering", difficulty:"Medium", source:"Module 4 code sample",
+ stem:`Complete the missing array declaration that stores index values for indexed rendering.`,
+ code:`void triangle(){
+    GLfloat trianglevertex[] = {
+        0.0f, .75f, 0.0f,
+        -0.75f, 0.0f, 0.0f,
+        0.75f, 0.0f, 0.0f
+    };
+
+    __BLANK_1__ indices[] = {
+        0,1,2
+    };
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, trianglevertex);
+    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, indices);
+    glDisableClientState(GL_VERTEX_ARRAY);
+}`,
+ blanks:[{id:1, answer:`GLubyte`, accepted:[], caseSensitive:true}],
+ explanation:`GLubyte is the OpenGL type for the index array, matching the GL_UNSIGNED_BYTE type argument passed to glDrawElements().`},
+
+{id:"m4b-code-10", type:"code_blank", topic:"Indexed Rendering", difficulty:"Medium", source:"Module 4 code sample",
+ stem:`Complete the missing statement that draws using the index array instead of glDrawArrays().`,
+ code:`void triangle(){
+    GLfloat trianglevertex[] = {
+        0.0f, .75f, 0.0f,
+        -0.75f, 0.0f, 0.0f,
+        0.75f, 0.0f, 0.0f
+    };
+    GLubyte indices[] = {
+        0,1,2
+    };
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, trianglevertex);
+    __BLANK_1__
+    glDisableClientState(GL_VERTEX_ARRAY);
+}`,
+ blanks:[{id:1, answer:`glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, indices);`, accepted:[`glDrawElements(GL_TRIANGLES,3,GL_UNSIGNED_BYTE,indices);`], caseSensitive:true}],
+ explanation:`glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, indices) draws one triangle using the 3 index values, each read as an unsigned byte.`},
+
+{id:"m4b-code-11", type:"code_blank", topic:"Vertex Arrays", difficulty:"Medium", source:"Module 4 code sample",
+ stem:`Complete the missing statement that draws the rectangle using its vertex array.`,
+ code:`void rectangle(){
+    glColor3f(0.0f,1.0f,0.0f);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, quadvertices);
+    __BLANK_1__
+    glDisableClientState(GL_VERTEX_ARRAY);
+}`,
+ blanks:[{id:1, answer:`glDrawArrays(GL_QUADS,0,4);`, accepted:[`glDrawArrays(GL_QUADS, 0, 4);`], caseSensitive:true}],
+ explanation:`glDrawArrays(GL_QUADS, 0, 4) draws one quadrilateral using the 4 vertices in quadvertices.`}
+
+  ]
+}
+
+};
+
+/* =========================================================================
+   QUESTION-DATA VALIDATION
+   Runs over every set on load; reports problems in the sidebar banner.
+========================================================================= */
+const REQUIRED_META = ['topic','difficulty','source','explanation'];
+
+function validateSet(setId, setObj){
+  const errors = [];
+  const seenIds = new Set();
+  const seenStems = new Map();
+  const validQuestions = [];
+  (setObj && Array.isArray(setObj.questions) ? setObj.questions : []).forEach((q, idx)=>{
+    const tag = `[${setId} #${idx+1}${q && q.id ? ' ('+q.id+')' : ''}]`;
+    if(!q || typeof q !== 'object'){ errors.push(`${tag} not a valid object — skipped.`); return; }
+    if(!q.id){ errors.push(`${tag} missing id — skipped.`); return; }
+    if(seenIds.has(q.id)){ errors.push(`${tag} duplicate id "${q.id}" — skipped.`); return; }
+    if(!['single','multi','code_blank'].includes(q.type)){ errors.push(`${tag} invalid type "${q.type}" — skipped.`); return; }
+    if(!q.stem){ errors.push(`${tag} missing stem — skipped.`); return; }
+
+    REQUIRED_META.forEach(k=>{ if(!q[k]) errors.push(`${tag} missing ${k}.`); });
+
+    const stemKey = q.stem.replace(/\s+/g,' ').trim().toLowerCase();
+    if(seenStems.has(stemKey)){
+      errors.push(`${tag} duplicate stem, also in ${seenStems.get(stemKey)} — skipped.`);
+      return;
+    }
+    seenStems.set(stemKey, q.id);
+
+    if(q.type === 'single' || q.type === 'multi'){
+      if(!Array.isArray(q.opts) || q.opts.length < 2){ errors.push(`${tag} needs at least 2 opts — skipped.`); return; }
+      const keys = q.opts.map(o=>o[0]);
+      if(new Set(keys).size !== keys.length){ errors.push(`${tag} duplicate option keys — skipped.`); return; }
+      if(q.type === 'single'){
+        if(!keys.includes(q.ans)){ errors.push(`${tag} ans "${q.ans}" not among option keys — skipped.`); return; }
+      } else {
+        if(!Array.isArray(q.ans) || !q.ans.length){ errors.push(`${tag} multi ans must be a non-empty array — skipped.`); return; }
+        const missingAns = q.ans.filter(a=>!keys.includes(a));
+        if(missingAns.length){ errors.push(`${tag} multi ans ${missingAns.join(',')} not among option keys — skipped.`); return; }
+        if(new Set(q.ans).size !== q.ans.length){ errors.push(`${tag} multi ans has duplicates — skipped.`); return; }
+        if(q.n != null && q.n !== q.ans.length){ errors.push(`${tag} n (${q.n}) does not match the ${q.ans.length} correct answers — skipped.`); return; }
+      }
+    }
+
+    if(q.type === 'code_blank'){
+      if(!q.code || typeof q.code !== 'string'){ errors.push(`${tag} missing code — skipped.`); return; }
+      if(!Array.isArray(q.blanks) || q.blanks.length < 1){ errors.push(`${tag} needs at least 1 blank — skipped.`); return; }
+      const placeholderIds = [...q.code.matchAll(/__BLANK_(\d+)__/g)].map(m=>Number(m[1]));
+      const blankIds = q.blanks.map(b=>b.id);
+      const missing = blankIds.filter(id=>!placeholderIds.includes(id));
+      const extra = placeholderIds.filter(id=>!blankIds.includes(id));
+      if(missing.length){ errors.push(`${tag} blanks ${missing.join(',')} have no matching __BLANK_n__ in code — skipped.`); return; }
+      if(extra.length){ errors.push(`${tag} code has __BLANK_n__ placeholders ${extra.join(',')} with no matching blank def — skipped.`); return; }
+      if(new Set(blankIds).size !== blankIds.length){ errors.push(`${tag} duplicate blank ids — skipped.`); return; }
+      const badBlank = q.blanks.find(b=> b.id==null || !b.answer);
+      if(badBlank){ errors.push(`${tag} a blank is missing id or answer — skipped.`); return; }
+    }
+
+    seenIds.add(q.id);
+    validQuestions.push(q);
+  });
+  return {errors, validQuestions};
+}
+
+function validateAllSets(){
+  const all = [];
+  const globalIds = new Set();
+  Object.keys(QUESTION_SETS).forEach(setId=>{
+    const {errors, validQuestions} = validateSet(setId, QUESTION_SETS[setId]);
+    errors.forEach(e=>all.push(e));
+    validQuestions.forEach(q=>{
+      if(globalIds.has(q.id)) all.push(`[global] id "${q.id}" is reused across sets.`);
+      globalIds.add(q.id);
+    });
+  });
+  return all;
+}
+
+/* =========================================================================
+   APP STATE & PERSISTENCE
+========================================================================= */
+const LS_HISTORY = 'pgr_history_v1';
+const LS_SETTINGS = 'pgr_settings_v1';
+const LS_LAST = 'pgr_last_v1';
+function lsGet(key, fallback){ try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; } }
+function lsSet(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+
+let settings = lsGet(LS_SETTINGS, {shuffleQ:false, shuffleO:false});
+if(typeof settings !== 'object' || settings === null) settings = {shuffleQ:false, shuffleO:false};
+
+const lastState = lsGet(LS_LAST, null);
+let activeSetId = (lastState && QUESTION_SETS[lastState.setId]) ? lastState.setId : Object.keys(QUESTION_SETS)[0];
+let activeMode = (lastState && ['study','practice','exam'].includes(lastState.mode)) ? lastState.mode : 'study';
+
+let allQuestions = [];      // validated pool for active set
+let order = [];             // indices into allQuestions, current run order
+let current = 0;
+let answers = {};           // qid -> {selected, submitted, correct, attempts}
+let bookmarks = new Set();  // qid strings, per active set
+let finished = false;
+let optionOrderMap = {};    // qid -> shuffled opts array (copy)
+let reviewFilter = 'incorrect';
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function sessionKey(setId, mode){ return `pgr_session_v1_${setId}_${mode}`; }
+function bookmarkKey(setId){ return `pgr_bookmarks_v1_${setId}`; }
+
+function saveSession(){
+  lsSet(sessionKey(activeSetId, activeMode), {order, current, answers, finished});
+  lsSet(LS_LAST, {setId: activeSetId, mode: activeMode});
+}
+function loadSession(){ return lsGet(sessionKey(activeSetId, activeMode), null); }
+function saveBookmarks(){ lsSet(bookmarkKey(activeSetId), Array.from(bookmarks)); }
+function loadBookmarks(){ bookmarks = new Set(lsGet(bookmarkKey(activeSetId), [])); }
+function pushHistory(entry){
+  const hist = lsGet(LS_HISTORY, []);
+  hist.unshift(entry);
+  lsSet(LS_HISTORY, hist.slice(0, 100));
+}
+
+/* =========================================================================
+   DOM REFS
+========================================================================= */
+const els = {};
+['setSelect','shuffleQToggle','shuffleOToggle','attemptedText','correctText','bookmarkedText',
+ 'progressBarInner','navGrid','validationBanner','setTitle','qCounter','qTypeTag','qDiffTag','qTopicTag',
+ 'bookmarkBtn','qStem','qBody','submitBtn','tryAgainBtn','finishBtn','feedbackBox','solutionBox','prevBtn','nextBtn',
+ 'quizScreen','resultsScreen','reviewScreen','historyScreen','scoreBig','scoreSub','scoreWarn','topicBreakdown','resultsGrid',
+ 'retryIncorrectBtn','backToQuizBtn','retakeBtn','reviewList','historyList','resetSideBtn','reviewSideBtn','historySideBtn',
+ 'closeReviewBtn','closeHistoryBtn'
+].forEach(id=> els[id] = document.getElementById(id));
+
+/* =========================================================================
+   SET / MODE / SETTINGS UI INIT
+========================================================================= */
+function populateSetSelect(){
+  els.setSelect.textContent = '';
+  Object.keys(QUESTION_SETS).forEach(id=>{
+    const o = document.createElement('option');
+    o.value = id; o.textContent = QUESTION_SETS[id].title;
+    els.setSelect.appendChild(o);
+  });
+  els.setSelect.value = activeSetId;
+}
+populateSetSelect();
+els.setSelect.onchange = ()=>{ loadSet(els.setSelect.value); };
+
+document.querySelectorAll('.modeTab').forEach(tab=>{
+  tab.onclick = ()=>{ switchMode(tab.dataset.mode); };
+});
+function refreshModeTabs(){
+  document.querySelectorAll('.modeTab').forEach(tab=>{
+    tab.classList.toggle('active', tab.dataset.mode === activeMode);
+  });
+}
+
+els.shuffleQToggle.checked = !!settings.shuffleQ;
+els.shuffleOToggle.checked = !!settings.shuffleO;
+els.shuffleQToggle.onchange = ()=>{
+  settings.shuffleQ = els.shuffleQToggle.checked;
+  lsSet(LS_SETTINGS, settings);
+  startFreshSession(); showScreen('quiz'); render();
+};
+els.shuffleOToggle.onchange = ()=>{
+  settings.shuffleO = els.shuffleOToggle.checked;
+  lsSet(LS_SETTINGS, settings);
+  optionOrderMap = {};
+  render();
+};
+
+/* =========================================================================
+   LOAD / SWITCH
+========================================================================= */
+function showValidationReport(){
+  const errors = validateAllSets();
+  if(errors.length){
+    els.validationBanner.style.display = 'block';
+    els.validationBanner.textContent = 'Question data warnings:\n' + errors.map(e=>'• ' + e).join('\n');
+  } else {
+    els.validationBanner.style.display = 'none';
+    els.validationBanner.textContent = '';
+  }
+}
+
+function loadSet(setId){
+  activeSetId = setId;
+  const {validQuestions} = validateSet(setId, QUESTION_SETS[setId]);
+  allQuestions = validQuestions;
+  els.setTitle.textContent = QUESTION_SETS[setId].title;
+  els.setSelect.value = setId;
+  loadBookmarks();
+  refreshModeTabs();
+  restoreOrStartSession();
+  showScreen('quiz');
+}
+
+function switchMode(mode){
+  activeMode = mode;
+  refreshModeTabs();
+  restoreOrStartSession();
+  showScreen('quiz');
+}
+
+function validOrder(o){
+  return Array.isArray(o) && o.length > 0 &&
+    o.every(i=> Number.isInteger(i) && i >= 0 && i < allQuestions.length) &&
+    new Set(o).size === o.length;
+}
+
+function restoreOrStartSession(){
+  const saved = loadSession();
+  optionOrderMap = {};
+  if(saved && validOrder(saved.order)){
+    order = saved.order;
+    current = Math.min(Math.max(saved.current || 0, 0), order.length-1);
+    answers = (saved.answers && typeof saved.answers === 'object') ? saved.answers : {};
+    finished = !!saved.finished;
+    // drop answers for ids no longer present
+    const liveIds = new Set(allQuestions.map(q=>q.id));
+    Object.keys(answers).forEach(k=>{ if(!liveIds.has(k)) delete answers[k]; });
+  } else {
+    startFreshSession();
+  }
+  render();
+}
+
+function startFreshSession(){
+  let idxs = allQuestions.map((_,i)=>i);
+  if(settings.shuffleQ) idxs = shuffle(idxs);
+  order = idxs;
+  current = 0;
+  answers = {};
+  finished = false;
+  optionOrderMap = {};
+  saveSession();
+}
+
+/* =========================================================================
+   HELPERS
+========================================================================= */
+function currentQ(){ return allQuestions[order[current]]; }
+function getOpts(q){
+  if(q.type !== 'single' && q.type !== 'multi') return null;
+  if(!settings.shuffleO) return q.opts;
+  if(!optionOrderMap[q.id]) optionOrderMap[q.id] = shuffle(q.opts);
+  return optionOrderMap[q.id];
+}
+function hasSelection(q){
+  const a = answers[q.id];
+  if(!a) return false;
+  if(q.type === 'single') return !!a.selected;
+  if(q.type === 'multi') return Array.isArray(a.selected) && a.selected.length > 0;
+  if(q.type === 'code_blank') return a.selected && Object.values(a.selected).some(v=> typeof v === 'string' && v.trim());
+  return false;
+}
+function isAttempted(q){
+  const a = answers[q.id];
+  if(!a) return false;
+  if(q.type === 'single') return !!a.selected;
+  if(q.type === 'multi') return Array.isArray(a.selected) && a.selected.length > 0;
+  if(q.type === 'code_blank') return a.selected && q.blanks.every(b=> typeof a.selected[b.id] === 'string' && a.selected[b.id].trim());
+  return false;
+}
+function normalizeForGrade(text, caseSensitive){
+  const t = String(text == null ? '' : text).trim().replace(/\s+/g,' ');
+  return caseSensitive === false ? t.toLowerCase() : t;
+}
+function gradeQuestion(q, selected){
+  if(q.type === 'single'){
+    return {correct: selected === q.ans, perBlank:null, blanksCorrect:0, blanksTotal:0};
+  }
+  if(q.type === 'multi'){
+    const sel = Array.isArray(selected) ? selected.slice().sort() : [];
+    const ans = q.ans.slice().sort();
+    return {correct: sel.length === ans.length && sel.every((v,i)=>v===ans[i]), perBlank:null, blanksCorrect:0, blanksTotal:0};
+  }
+  if(q.type === 'code_blank'){
+    let allOk = true, okCount = 0;
+    const perBlank = {};
+    q.blanks.forEach(b=>{
+      const cs = b.caseSensitive !== false; // OpenGL / GLUT identifiers: case-sensitive by default
+      const norm = normalizeForGrade((selected && selected[b.id]) || '', cs);
+      const candidates = [b.answer, ...(b.accepted||[])].map(a=> normalizeForGrade(a, cs));
+      const ok = norm.length > 0 && candidates.includes(norm);
+      perBlank[b.id] = ok;
+      if(ok) okCount++; else allOk = false;
+    });
+    return {correct: allOk, perBlank, blanksCorrect: okCount, blanksTotal: q.blanks.length};
+  }
+  return {correct:false, perBlank:null, blanksCorrect:0, blanksTotal:0};
+}
+function solvedCode(q){
+  return q.code.replace(/__BLANK_(\d+)__/g, (m, id)=>{
+    const b = q.blanks.find(x=>String(x.id) === String(id));
+    return b ? b.answer : m;
+  });
+}
+
+/* =========================================================================
+   RENDER
+========================================================================= */
+function showScreen(name){
+  els.quizScreen.style.display = name==='quiz' ? 'block':'none';
+  els.resultsScreen.style.display = name==='results' ? 'block':'none';
+  els.reviewScreen.style.display = name==='review' ? 'block':'none';
+  els.historyScreen.style.display = name==='history' ? 'block':'none';
+}
+
+function render(){
+  els.qBody.textContent = '';
+  els.feedbackBox.className = '';
+  els.feedbackBox.textContent = '';
+  els.solutionBox.textContent = '';
+
+  const q = currentQ();
+  if(!q){
+    els.qStem.textContent = 'No questions available in this set.';
+    els.qCounter.textContent = 'Question 0 / 0';
+    els.submitBtn.style.display = 'none';
+    els.tryAgainBtn.style.display = 'none';
+    els.finishBtn.style.display = 'none';
+    els.prevBtn.disabled = true; els.nextBtn.disabled = true;
+    updateSidebar();
+    return;
+  }
+  els.nextBtn.disabled = false;
+
+  els.qCounter.textContent = `Question ${current+1} / ${order.length}`;
+  els.qTypeTag.textContent = q.type === 'code_blank' ? 'FILL IN THE CODE' : (q.type === 'multi' ? 'MULTI-SELECT' : 'MULTIPLE CHOICE');
+  els.qDiffTag.textContent = q.difficulty;
+  els.qDiffTag.className = 'tag difficulty-' + q.difficulty;
+  els.qTopicTag.textContent = q.topic;
+
+  const isBm = bookmarks.has(q.id);
+  els.bookmarkBtn.textContent = isBm ? '★ Bookmarked' : '☆ Bookmark';
+  els.bookmarkBtn.classList.toggle('on', isBm);
+
+  const rec = answers[q.id] || {};
+  const isLocked = (activeMode !== 'exam' && !!rec.submitted) || (activeMode === 'exam' && finished);
+
+  els.qStem.textContent = q.stem;
+
+  if(q.type === 'code_blank') renderCodeBlank(q, isLocked);
+  else renderChoices(q, rec, isLocked);
+
+  if(activeMode === 'exam'){
+    els.submitBtn.style.display = 'none';
+    els.tryAgainBtn.style.display = 'none';
+    els.finishBtn.style.display = finished ? 'none' : 'inline-block';
+  } else {
+    els.tryAgainBtn.style.display = (rec.submitted && rec.correct === false && activeMode === 'practice') ? 'inline-block' : 'none';
+    els.submitBtn.style.display = isLocked ? 'none' : 'inline-block';
+    els.submitBtn.disabled = !hasSelection(q);
+    els.finishBtn.style.display = 'inline-block';
+  }
+
+  if(isLocked && rec.submitted){
+    const grade = gradeQuestion(q, rec.selected);
+    els.feedbackBox.className = grade.correct ? 'ok' : 'bad';
+    els.feedbackBox.appendChild(document.createTextNode(grade.correct ? '✔ Correct!' : '✘ Not quite.'));
+    if(q.type === 'code_blank' && grade.blanksTotal > 1){
+      const p = document.createElement('div');
+      p.className = 'partial';
+      p.textContent = `Partial progress: ${grade.blanksCorrect} of ${grade.blanksTotal} blanks correct.`;
+      els.feedbackBox.appendChild(p);
+    }
+    if(q.explanation){
+      const e = document.createElement('div');
+      e.className = 'expl';
+      e.textContent = q.explanation;
+      els.feedbackBox.appendChild(e);
+    }
+    if(q.type === 'code_blank'){
+      const lbl = document.createElement('div');
+      lbl.className = 'solutionLabel';
+      lbl.textContent = 'Completed code';
+      const pre = document.createElement('pre');
+      pre.className = 'code solution';
+      pre.textContent = solvedCode(q);
+      els.solutionBox.appendChild(lbl);
+      els.solutionBox.appendChild(pre);
+    }
+  }
+
+  els.prevBtn.disabled = current === 0;
+  els.nextBtn.textContent = current === order.length-1 ? 'Finish ▸' : 'Next ▸';
+  updateSidebar();
+  saveSession();
+}
+
+function renderChoices(q, rec, isLocked){
+  const multi = q.type === 'multi';
+  const opts = getOpts(q);
+  const wrap = document.createElement('div'); wrap.className = 'choiceList';
+  opts.forEach(([k,v], idx)=>{
+    const div = document.createElement('label');
+    div.className = 'choice' + (isLocked ? ' locked' : '');
+
+    const input = document.createElement('input');
+    input.type = multi ? 'checkbox' : 'radio';
+    input.name = 'choice_' + q.id;
+    input.disabled = isLocked;
+    if(multi) input.checked = Array.isArray(rec.selected) && rec.selected.includes(k);
+    else input.checked = rec.selected === k;
+
+    const letter = document.createElement('span');
+    letter.className = 'letter';
+    letter.textContent = String.fromCharCode(65+idx);
+
+    const txt = document.createElement('span');
+    txt.className = 'txt';
+    txt.textContent = v;
+
+    div.appendChild(input); div.appendChild(letter); div.appendChild(txt);
+
+    if(!isLocked && (multi ? input.checked : rec.selected === k)) div.classList.add('selected');
+
+    input.onchange = ()=>{
+      const r = answers[q.id] = answers[q.id] || {};
+      if(multi){
+        const set = new Set(Array.isArray(r.selected) ? r.selected : []);
+        if(input.checked) set.add(k); else set.delete(k);
+        r.selected = Array.from(set);
+      } else {
+        r.selected = k;
+      }
+      if(activeMode === 'exam') r.submitted = false;
+      saveSession();
+      render();
+    };
+
+    if(isLocked){
+      const isCorrectKey = multi ? q.ans.includes(k) : k === q.ans;
+      const wasPicked = multi ? (Array.isArray(rec.selected) && rec.selected.includes(k)) : rec.selected === k;
+      if(isCorrectKey) div.classList.add('showCorrect');
+      else if(wasPicked) div.classList.add('showWrong');
+    }
+
+    wrap.appendChild(div);
+  });
+  els.qBody.appendChild(wrap);
+}
+
+function renderCodeBlank(q, isLocked){
+  if(!answers[q.id]) answers[q.id] = {selected:{}};
+  if(!answers[q.id].selected || typeof answers[q.id].selected !== 'object') answers[q.id].selected = {};
+  const rec = answers[q.id];
+  const grade = isLocked ? gradeQuestion(q, rec.selected) : null;
+
+  const pre = document.createElement('pre'); pre.className = 'code';
+  const parts = q.code.split(/__BLANK_(\d+)__/g);
+  parts.forEach((part, i)=>{
+    if(i % 2 === 0){
+      pre.appendChild(document.createTextNode(part));
+    } else {
+      const blankId = Number(part);
+      const blankDef = q.blanks.find(b=>b.id===blankId);
+      if(isLocked){
+        const val = rec.selected[blankId] || '';
+        const ok = grade.perBlank ? !!grade.perBlank[blankId] : false;
+        const span = document.createElement('span');
+        span.className = 'blankResult ' + (ok ? 'ok' : 'bad');
+        span.textContent = val.trim() ? val : '(blank)';
+        pre.appendChild(span);
+        if(!ok && blankDef){
+          const hint = document.createElement('span');
+          hint.className = 'blankCorrectHint';
+          hint.textContent = '→ ' + blankDef.answer;
+          pre.appendChild(hint);
+        }
+      } else {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'blankInput';
+        input.autocomplete = 'off';
+        input.spellcheck = false;
+        input.value = rec.selected[blankId] || '';
+        input.setAttribute('aria-label', 'Blank ' + blankId);
+        input.size = Math.max(14, Math.min(40, (blankDef ? blankDef.answer.length : 16)));
+        input.oninput = ()=>{
+          rec.selected[blankId] = input.value;
+          saveSession();
+          refreshActionButtons();
+          updateSidebar();
+        };
+        pre.appendChild(input);
+      }
+    }
+  });
+  els.qBody.appendChild(pre);
+}
+
+function refreshActionButtons(){
+  const q = currentQ();
+  if(!q) return;
+  if(els.submitBtn.style.display !== 'none') els.submitBtn.disabled = !hasSelection(q);
+}
+
+function updateSidebar(){
+  const attempted = order.filter(i=> isAttempted(allQuestions[i]) ).length;
+  const correctCount = order.filter(i=>{
+    const rec = answers[allQuestions[i].id];
+    return rec && rec.submitted && rec.correct;
+  }).length;
+  els.attemptedText.textContent = `${attempted} / ${order.length}`;
+  els.correctText.textContent = String(correctCount);
+  els.bookmarkedText.textContent = String(bookmarks.size);
+  els.progressBarInner.style.width = (order.length ? attempted/order.length*100 : 0) + '%';
+
+  els.navGrid.textContent = '';
+  order.forEach((qi, pos)=>{
+    const q = allQuestions[qi];
+    const rec = answers[q.id];
+    const btn = document.createElement('div');
+    btn.className = 'navBtn';
+    btn.textContent = String(pos+1);
+    btn.title = q.topic;
+    if(rec && rec.submitted){
+      btn.classList.add(rec.correct ? 'correct' : 'incorrect');
+    } else if(hasSelection(q)){
+      btn.classList.add('picked');
+    }
+    if(pos === current) btn.classList.add('current');
+    if(bookmarks.has(q.id)){
+      const dot = document.createElement('div'); dot.className='bmDot'; btn.appendChild(dot);
+    }
+    btn.onclick = ()=>{ current = pos; render(); };
+    els.navGrid.appendChild(btn);
+  });
+}
+
+/* =========================================================================
+   ACTIONS
+========================================================================= */
+els.bookmarkBtn.onclick = ()=>{
+  const q = currentQ(); if(!q) return;
+  if(bookmarks.has(q.id)) bookmarks.delete(q.id); else bookmarks.add(q.id);
+  saveBookmarks();
+  render();
+};
+
+els.submitBtn.onclick = ()=>{
+  const q = currentQ(); if(!q || !hasSelection(q)) return;
+  const rec = answers[q.id] = answers[q.id] || {};
+  const result = gradeQuestion(q, rec.selected);
+  rec.submitted = true;
+  rec.correct = result.correct;
+  rec.attempts = (rec.attempts||0) + 1;
+  saveSession();
+  render();
+};
+
+els.tryAgainBtn.onclick = ()=>{
+  const q = currentQ(); if(!q) return;
+  const rec = answers[q.id] = answers[q.id] || {};
+  rec.submitted = false;
+  delete rec.correct;
+  if(q.type === 'code_blank') rec.selected = {};
+  else if(q.type === 'multi') rec.selected = [];
+  else rec.selected = null;
+  saveSession();
+  render();
+};
+
+els.prevBtn.onclick = ()=>{ if(current>0){ current--; render(); } };
+els.nextBtn.onclick = ()=>{
+  if(current < order.length-1){ current++; render(); }
+  else { finishRun(); }
+};
+els.finishBtn.onclick = finishRun;
+
+function computeTopicBreakdown(){
+  const byTopic = {};
+  order.forEach(qi=>{
+    const q = allQuestions[qi];
+    const rec = answers[q.id];
+    if(!byTopic[q.topic]) byTopic[q.topic] = {correct:0, total:0};
+    byTopic[q.topic].total++;
+    if(rec && rec.submitted && rec.correct) byTopic[q.topic].correct++;
+  });
+  return byTopic;
+}
+
+function finishRun(){
+  if(!order.length) return;
+  const unanswered = order.filter(i=> !isAttempted(allQuestions[i]) ).length;
+  if(unanswered > 0){
+    const msg = `${unanswered} question${unanswered===1?'':'s'} ${unanswered===1?'is':'are'} still unanswered. ` +
+                `Unanswered questions count as incorrect in the overall score. Finish anyway?`;
+    if(!window.confirm(msg)) return;
+  }
+
+  if(activeMode === 'exam'){
+    order.forEach(qi=>{
+      const q = allQuestions[qi];
+      const rec = answers[q.id] = answers[q.id] || {};
+      rec.correct = isAttempted(q) ? gradeQuestion(q, rec.selected).correct : false;
+      rec.submitted = true;
+    });
+  }
+  finished = true;
+  saveSession();
+
+  const attemptedCount = order.filter(i=>isAttempted(allQuestions[i])).length;
+  const correctCount = order.filter(i=>{
+    const rec = answers[allQuestions[i].id];
+    return rec && rec.submitted && rec.correct;
+  }).length;
+  const topicBreakdown = computeTopicBreakdown();
+
+  pushHistory({
+    setId: activeSetId,
+    setTitle: QUESTION_SETS[activeSetId].title,
+    mode: activeMode,
+    date: new Date().toISOString(),
+    total: order.length,
+    attempted: attemptedCount,
+    correct: correctCount,
+    topicBreakdown
+  });
+
+  showResults(attemptedCount, correctCount, topicBreakdown);
+}
+
+function showResults(attemptedCount, correctCount, topicBreakdown){
+  showScreen('results');
+  const overallPct = order.length>0 ? Math.round(correctCount/order.length*100) : 0;
+  const attemptedPct = attemptedCount>0 ? Math.round(correctCount/attemptedCount*100) : 0;
+  els.scoreBig.textContent = overallPct + '%';
+  els.scoreSub.textContent = `${correctCount} of ${order.length} correct overall  ·  ${attemptedPct}% accuracy on ${attemptedCount} attempted`;
+  const skipped = order.length - attemptedCount;
+  els.scoreWarn.textContent = skipped > 0
+    ? `⚠ ${skipped} question${skipped===1?'':'s'} left unanswered — counted as incorrect.`
+    : '';
+
+  els.topicBreakdown.textContent = '';
+  const h3 = document.createElement('h3'); h3.textContent = 'Topic Breakdown';
+  els.topicBreakdown.appendChild(h3);
+  Object.keys(topicBreakdown).forEach(topic=>{
+    const t = topicBreakdown[topic];
+    const pctT = t.total>0 ? Math.round(t.correct/t.total*100) : 0;
+    const row = document.createElement('div'); row.className = 'topicRow';
+    const name = document.createElement('div'); name.className = 'tname'; name.textContent = topic;
+    const bar = document.createElement('div'); bar.className = 'topicBar';
+    const fill = document.createElement('div'); fill.style.width = pctT + '%';
+    bar.appendChild(fill);
+    const score = document.createElement('div'); score.className = 'tscore'; score.textContent = `${t.correct}/${t.total}`;
+    row.appendChild(name); row.appendChild(bar); row.appendChild(score);
+    els.topicBreakdown.appendChild(row);
+  });
+
+  els.resultsGrid.textContent = '';
+  order.forEach((qi,pos)=>{
+    const q = allQuestions[qi];
+    const rec = answers[q.id];
+    let cls = 'unattempted';
+    if(rec && rec.submitted) cls = rec.correct ? 'correct' : 'incorrect';
+    const box = document.createElement('div');
+    box.className = 'rBox ' + cls;
+    box.textContent = String(pos+1);
+    box.onclick = ()=>{ jumpTo(pos); };
+    els.resultsGrid.appendChild(box);
+  });
+}
+
+function jumpTo(pos){
+  showScreen('quiz');
+  current = Math.min(Math.max(pos,0), Math.max(order.length-1,0));
+  render();
+}
+
+els.backToQuizBtn.onclick = ()=>{ jumpTo(current); };
+els.retakeBtn.onclick = ()=>{ startFreshSession(); showScreen('quiz'); render(); };
+els.retryIncorrectBtn.onclick = ()=>{
+  const incorrectIdx = order.filter(qi=>{
+    const rec = answers[allQuestions[qi].id];
+    return rec && rec.submitted && rec.correct === false;
+  });
+  if(!incorrectIdx.length){ jumpTo(0); return; }
+  order = incorrectIdx;
+  current = 0;
+  incorrectIdx.forEach(qi=>{
+    const q = allQuestions[qi];
+    answers[q.id] = {selected: q.type==='code_blank' ? {} : (q.type==='multi' ? [] : null)};
+  });
+  finished = false;
+  saveSession();
+  showScreen('quiz');
+  render();
+};
+
+els.resetSideBtn.onclick = ()=>{
+  if(!window.confirm('Reset all progress for this set and mode?')) return;
+  startFreshSession();
+  showScreen('quiz');
+  render();
+};
+
+/* ---- Review panel ---- */
+els.reviewSideBtn.onclick = ()=>{ renderReview(); showScreen('review'); };
+els.closeReviewBtn.onclick = ()=>{ showScreen('quiz'); render(); };
+document.querySelectorAll('.filterRow button').forEach(btn=>{
+  btn.onclick = ()=>{
+    document.querySelectorAll('.filterRow button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    reviewFilter = btn.dataset.f;
+    renderReview();
+  };
+});
+function renderReview(){
+  els.reviewList.textContent = '';
+  let shown = 0;
+  order.forEach((qi,pos)=>{
+    const q = allQuestions[qi];
+    const rec = answers[q.id] || {};
+    const isBm = bookmarks.has(q.id);
+    let status = 'unattempted';
+    if(rec.submitted) status = rec.correct ? 'correct' : 'incorrect';
+
+    let include = false;
+    if(reviewFilter === 'all') include = true;
+    else if(reviewFilter === 'incorrect') include = status === 'incorrect';
+    else if(reviewFilter === 'unanswered') include = status === 'unattempted';
+    else if(reviewFilter === 'bookmarked') include = isBm;
+    if(!include) return;
+    shown++;
+
+    const item = document.createElement('div'); item.className = 'reviewItem';
+    const label = document.createElement('span');
+    const firstLine = q.stem.split('\n')[0];
+    label.textContent = `${isBm?'★ ':''}Q${pos+1} — ` + (firstLine.length > 90 ? firstLine.slice(0,90) + '…' : firstLine);
+    const stat = document.createElement('span');
+    stat.className = 'rstat ' + status;
+    stat.textContent = status.toUpperCase();
+    item.appendChild(label); item.appendChild(stat);
+    item.onclick = ()=>{ showScreen('quiz'); current = pos; render(); };
+    els.reviewList.appendChild(item);
+  });
+  if(!shown){
+    const empty = document.createElement('div');
+    empty.className = 'hint';
+    empty.textContent = 'No questions match this filter.';
+    els.reviewList.appendChild(empty);
+  }
+}
+
+/* ---- History panel ---- */
+els.historySideBtn.onclick = ()=>{ renderHistory(); showScreen('history'); };
+els.closeHistoryBtn.onclick = ()=>{ showScreen('quiz'); render(); };
+function renderHistory(){
+  const hist = lsGet(LS_HISTORY, []);
+  els.historyList.textContent = '';
+  if(!Array.isArray(hist) || !hist.length){
+    const empty = document.createElement('div');
+    empty.className = 'hint';
+    empty.textContent = 'No attempts recorded yet.';
+    els.historyList.appendChild(empty);
+    return;
+  }
+  hist.forEach(h=>{
+    const overall = h.total>0 ? Math.round(h.correct/h.total*100) : 0;
+    const acc = h.attempted>0 ? Math.round(h.correct/h.attempted*100) : 0;
+    const div = document.createElement('div'); div.className = 'historyItem';
+
+    const top = document.createElement('div'); top.className = 'hTop';
+    const left = document.createElement('span');
+    left.textContent = `${h.setTitle} — ${String(h.mode||'').toUpperCase()}`;
+    const right = document.createElement('span');
+    const d = new Date(h.date);
+    right.textContent = isNaN(d.getTime()) ? '' : d.toLocaleString();
+    top.appendChild(left); top.appendChild(right);
+
+    const body = document.createElement('div');
+    body.appendChild(document.createTextNode('Score: '));
+    const sc = document.createElement('span'); sc.className = 'hScore'; sc.textContent = overall + '%';
+    body.appendChild(sc);
+    body.appendChild(document.createTextNode(` (${h.correct}/${h.total} overall · ${acc}% of ${h.attempted} attempted)`));
+
+    div.appendChild(top); div.appendChild(body);
+    els.historyList.appendChild(div);
+  });
+}
+
+/* =========================================================================
+   KEYBOARD ACCESSIBILITY
+   Shortcuts never fire while the user is typing in a code blank.
+========================================================================= */
+document.addEventListener('keydown', (e)=>{
+  if(e.ctrlKey || e.metaKey || e.altKey) return;
+  const ae = document.activeElement;
+  const tag = ae && ae.tagName;
+  const inTextInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (ae && ae.isContentEditable);
+  if(els.quizScreen.style.display !== 'block') return;
+
+  if(e.key === 'Enter'){
+    if(inTextInput && tag !== 'BUTTON'){
+      if(!els.submitBtn.disabled && els.submitBtn.style.display !== 'none'){
+        if(ae && ae.blur) ae.blur();
+        els.submitBtn.click();
+        e.preventDefault();
+      }
+      return;
+    }
+    if(!els.submitBtn.disabled && els.submitBtn.style.display !== 'none'){ els.submitBtn.click(); e.preventDefault(); }
+    else { els.nextBtn.click(); e.preventDefault(); }
+    return;
+  }
+  if(inTextInput) return;
+
+  if(e.key === 'ArrowRight'){ els.nextBtn.click(); e.preventDefault(); }
+  else if(e.key === 'ArrowLeft'){ if(!els.prevBtn.disabled) els.prevBtn.click(); e.preventDefault(); }
+  else if(e.key.toLowerCase() === 'b'){ els.bookmarkBtn.click(); e.preventDefault(); }
+  else if(['1','2','3','4','5','6'].includes(e.key)){
+    const q = currentQ();
+    if(q && (q.type === 'single' || q.type === 'multi')){
+      const idx = Number(e.key)-1;
+      const inputs = els.qBody.querySelectorAll('.choice input');
+      if(inputs[idx] && !inputs[idx].disabled){ inputs[idx].click(); e.preventDefault(); }
+    }
+  }
+});
+
+/* =========================================================================
+   INIT
+========================================================================= */
+showValidationReport();
+refreshModeTabs();
+loadSet(activeSetId);
+</script>
+</body>
+</html>
