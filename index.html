@@ -380,6 +380,14 @@
    Module 2 — Geometric Primitives and Attributes
    Diagnostic Test — Programming Graphics
 ========================================================================= */
+const MC=(id,topic,difficulty,source,stem,choices,correct,explanation)=>({
+  id,type:"single",topic,difficulty,source,stem,
+  opts:choices.map((v,i)=>[String.fromCharCode(65+i),v]),
+  ans:String.fromCharCode(65+correct),explanation
+});
+const CB=(id,topic,difficulty,source,stem,code,blanks,explanation)=>({
+  id,type:"code_blank",topic,difficulty,source,stem,code,blanks,explanation
+});
 const QUESTION_SETS = {
 
 "module1": {
@@ -2161,7 +2169,128 @@ what does the GL_UNSIGNED_BYTE argument describe?`,
  explanation:`glDrawArrays(GL_QUADS, 0, 4) draws one quadrilateral using the 4 vertices in quadvertices.`}
 
   ]
+},
+
+"module5": {
+ title:"Module 5 — Vertex Buffer Objects",
+ questions:[
+MC("m5-01","VBO Fundamentals","Easy","Module 5","What is the main purpose of a Vertex Buffer Object (VBO)?",["Upload and store vertex data in graphics-device memory","Create a GLUT window","Compile a fragment shader","Set the background color"],0,"A VBO stores vertex-related data in GPU or server memory for efficient rendering."),
+MC("m5-02","VBO Fundamentals","Easy","Module 5","Why can VBOs improve rendering performance?",["They keep data in video-device memory instead of repeatedly reading system memory","They increase the monitor refresh rate","They remove all draw calls","They replace OpenGL"],0,"Keeping data close to the GPU reduces repeated client-to-device transfers."),
+MC("m5-03","GLEW Setup","Easy","Module 5","Which additional header is included to use GLEW functions?",["<GL/glew.h>","<GL/vector.h>","<GL/vbo.h>","<iostream.h>"],0,"The module adds #include <GL/glew.h> before using GLEW and modern OpenGL entry points."),
+MC("m5-04","GLEW Setup","Medium","Module 5","When should glewInit() be called in the sample program?",["After creating the OpenGL window and before glutMainLoop()","Before glutInit()","Inside every vertex loop","After glutMainLoop() returns"],0,"An OpenGL context must exist before GLEW initializes, and initialization occurs before the event loop."),
+MC("m5-05","Buffer Creation","Easy","Module 5","Which function generates buffer-object IDs?",["glGenBuffers()","glCreateWindow()","glVertexPointer()","glMapBuffer()"],0,"glGenBuffers generates one or more buffer names or IDs."),
+MC("m5-06","Buffer Binding","Easy","Module 5","Which target is used for ordinary vertex data in the module?",["GL_ARRAY_BUFFER","GL_COLOR_BUFFER_BIT","GL_ELEMENT_ARRAY_BUFFER","GL_VERTEX_ARRAY"],0,"Vertex coordinate arrays are uploaded through the GL_ARRAY_BUFFER target."),
+MC("m5-07","Buffer Binding","Medium","Module 5","What does glBindBuffer(GL_ARRAY_BUFFER, VBOid) do?",["Makes VBOid the current array buffer","Deletes VBOid","Copies pixels to the screen","Enables the color array"],0,"Binding selects the buffer that later array-buffer operations affect."),
+MC("m5-08","Buffer Upload","Easy","Module 5","Which function uploads an array into graphics-card memory?",["glBufferData()","glFlush()","glDrawArrays()","glVertex2f()"],0,"glBufferData creates and initializes the bound buffer's data store."),
+MC("m5-09","Usage Hints","Easy","Module 5","Which usage hint fits data modified once and used many times?",["GL_STATIC_DRAW","GL_STREAM_DRAW","GL_DYNAMIC_DRAW","GL_READ_WRITE"],0,"GL_STATIC_DRAW describes data stored once and drawn repeatedly."),
+MC("m5-10","Usage Hints","Medium","Module 5","Which usage hint fits data modified repeatedly and used many times?",["GL_DYNAMIC_DRAW","GL_STATIC_DRAW","GL_STREAM_DRAW","GL_ARRAY_BUFFER"],0,"GL_DYNAMIC_DRAW is intended for data that changes repeatedly and is drawn repeatedly."),
+MC("m5-11","Usage Hints","Medium","Module 5","GL_STREAM_DRAW is intended for data that is:",["Modified once and used at most a few times","Modified repeatedly and used many times","Never rendered","Stored only as indices"],0,"The module defines stream data as supplied once and used only a few times."),
+MC("m5-12","Client State","Easy","Module 5","Which statement activates vertex-array client state?",["glEnableClientState(GL_VERTEX_ARRAY);","glBegin(GL_VERTEX_ARRAY);","glEnable(GL_ARRAY_BUFFER);","glVertexPointer(GL_VERTEX_ARRAY);"],0,"The vertex array must be enabled before OpenGL uses its pointer during drawing."),
+MC("m5-13","Vertex Pointer","Medium","Module 5","After a VBO is bound, what does the final 0 mean in glVertexPointer(3, GL_FLOAT, 0, 0)?",["The vertex data begins at byte offset 0 in the bound VBO","Draw zero vertices","Disable the VBO","Use zero components per vertex"],0,"With a buffer bound, the pointer parameter is treated as a byte offset."),
+MC("m5-14","Drawing","Medium","Module 5","Which call renders primitives directly from sequential vertex-array entries?",["glDrawArrays()","glBufferData()","glGenBuffers()","glUnmapBuffer()"],0,"glDrawArrays uses sequential array elements beginning at the specified first index."),
+MC("m5-15","Indexed Rendering","Easy","Module 5","Which buffer target stores index data for glDrawElements()?",["GL_ELEMENT_ARRAY_BUFFER","GL_ARRAY_BUFFER","GL_COLOR_ARRAY","GL_NORMAL_ARRAY"],0,"Index arrays are uploaded and bound through GL_ELEMENT_ARRAY_BUFFER."),
+MC("m5-16","Indexed Rendering","Medium","Module 5","Which function draws using index values from the element buffer?",["glDrawElements()","glDrawArrays()","glArrayElement()","glVertexPointer()"],0,"glDrawElements obtains vertex indices using the bound element-array buffer."),
+MC("m5-17","Buffer Mapping","Easy","Module 5","What does glMapBuffer() do?",["Maps the buffer into client memory so the application can access it","Moves the GLUT window","Deletes the buffer","Maps texture coordinates to a polygon"],0,"Mapping provides the application a pointer through which buffer data may be read or modified."),
+MC("m5-18","Buffer Mapping","Medium","Module 5","Why can glMapBuffer() wait before returning?",["The GPU may still be working with the buffer","The window title is missing","glFlush() always sleeps","The array contains floats"],0,"Mapping can require synchronization so the GPU finishes using the buffer safely."),
+MC("m5-19","Buffer Mapping","Easy","Module 5","What must be called after modifying a mapped VBO?",["glUnmapBuffer()","glEnd()","glutPostRedisplay() only","glGenBuffers()"],0,"glUnmapBuffer releases the mapped pointer and returns the buffer to OpenGL."),
+MC("m5-20","Resource Cleanup","Easy","Module 5","Which function releases a buffer object?",["glDeleteBuffers()","glDisableClientState()","glClear()","glFlush()"],0,"glDeleteBuffers deletes the specified buffer names and their data stores."),
+MC("m5-21","Resource Cleanup","Medium","Module 5","What does glBindBuffer(GL_ARRAY_BUFFER, 0) do?",["Unbinds the current array buffer and returns to normal pointer operation","Deletes every VBO","Clears the color buffer","Selects buffer number zero for drawing"],0,"Binding buffer 0 removes the VBO binding for that target."),
+MC("m5-22","Code Reading","Hard","Module 5","A triangle array contains 9 GLfloat values. Which size expression uploads the complete array?",["sizeof(GLfloat) * 9","sizeof(GLfloat) * 3","9 bytes","sizeof(GLubyte) * 9"],0,"Three vertices with three GLfloat coordinates each require nine GLfloat values."),
+CB("m5-code-01","GLEW Setup","Easy","Module 5 code sample","Complete the missing GLEW initialization call.",`GLenum err = __BLANK_1__;
+if (err == GLEW_OK) {
+    glutMainLoop();
+}`,[{id:1,answer:"glewInit()",accepted:["glewInit();"],caseSensitive:true}],"glewInit() loads supported OpenGL function entry points after the context exists."),
+CB("m5-code-02","Buffer Creation","Medium","Module 5 code sample","Generate one VBO ID and bind it as the current array buffer.",`GLuint VBOid;
+__BLANK_1__
+__BLANK_2__`,[{id:1,answer:"glGenBuffers(1, &VBOid);",accepted:["glGenBuffers(1,&VBOid);"],caseSensitive:true},{id:2,answer:"glBindBuffer(GL_ARRAY_BUFFER, VBOid);",accepted:["glBindBuffer(GL_ARRAY_BUFFER,VBOid);"],caseSensitive:true}],"glGenBuffers creates the ID and glBindBuffer selects it for subsequent array-buffer operations."),
+CB("m5-code-03","Buffer Upload","Medium","Module 5 code sample","Upload all nine triangle coordinates using the static-draw usage hint.",`GLfloat trianglevertices[] = {
+ 0.0f,.75f,0.0f, -.75f,0.0f,0.0f, .75f,0.0f,0.0f
+};
+__BLANK_1__`,[{id:1,answer:"glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*9, trianglevertices, GL_STATIC_DRAW);",accepted:["glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*9,trianglevertices,GL_STATIC_DRAW);"],caseSensitive:true}],"glBufferData allocates the bound buffer and copies the nine GLfloat values into it."),
+CB("m5-code-04","Vertex Pointer","Medium","Module 5 code sample","Specify three tightly packed float components beginning at offset zero.",`glEnableClientState(GL_VERTEX_ARRAY);
+__BLANK_1__
+glDrawArrays(GL_TRIANGLES, 0, 3);`,[{id:1,answer:"glVertexPointer(3, GL_FLOAT, 0, 0);",accepted:["glVertexPointer(3,GL_FLOAT,0,0);"],caseSensitive:true}],"With the VBO bound, the final zero selects byte offset zero."),
+CB("m5-code-05","Indexed Rendering","Hard","Module 5 code sample","Draw six unsigned-byte indices from the bound element buffer.",`glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBOindex);
+__BLANK_1__`,[{id:1,answer:"glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0);",accepted:["glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_BYTE,0);"],caseSensitive:true}],"The bound element buffer supplies six GL_UNSIGNED_BYTE indices starting at offset zero."),
+CB("m5-code-06","Buffer Mapping","Medium","Module 5 code sample","Map the array buffer for reading and writing, then unmap it.",`GLfloat *mapV = NULL;
+mapV = (GLfloat*) __BLANK_1__;
+// modify mapV here
+__BLANK_2__`,[{id:1,answer:"glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE)",accepted:["glMapBuffer(GL_ARRAY_BUFFER,GL_READ_WRITE)"],caseSensitive:true},{id:2,answer:"glUnmapBuffer(GL_ARRAY_BUFFER);",accepted:["glUnmapBuffer(GL_ARRAY_BUFFER)"],caseSensitive:true}],"glMapBuffer returns accessible storage; glUnmapBuffer finishes the mapped access."),
+CB("m5-code-07","Resource Cleanup","Easy","Module 5 code sample","Unbind and delete the VBO after drawing.",`glDisableClientState(GL_VERTEX_ARRAY);
+__BLANK_1__
+__BLANK_2__`,[{id:1,answer:"glBindBuffer(GL_ARRAY_BUFFER, 0);",accepted:["glBindBuffer(GL_ARRAY_BUFFER,0);"],caseSensitive:true},{id:2,answer:"glDeleteBuffers(1, &VBOid);",accepted:["glDeleteBuffers(1,&VBOid);"],caseSensitive:true}],"Binding zero unbinds the buffer, and glDeleteBuffers frees it.")
+]},
+
+"module6": {
+ title:"Module 6 — Matrices, 3D Objects and Color Arrays",
+ questions:[
+MC("m6-01","Matrix Fundamentals","Easy","Module 6","What is a matrix?",["A rectangular array of mathematical expressions","A single scalar value","Only a list of colors","A GLUT callback"],0,"A matrix is arranged in rows and columns, similar to a two-dimensional array."),
+MC("m6-02","Matrix Fundamentals","Easy","Module 6","In matrix notation aᵢⱼ, what do i and j represent?",["Row and column","Width and height","X and Y colors","Buffer and offset"],0,"The first index identifies the row and the second identifies the column."),
+MC("m6-03","Matrix Operations","Medium","Module 6","When can two matrices be added or subtracted?",["When they have identical row and column dimensions","Only when both are 4×4","When they contain the same values","Whenever one is a vector"],0,"Matrix addition and subtraction require matching dimensions."),
+MC("m6-04","Matrix Operations","Easy","Module 6","What does a scalar product do to a matrix?",["Multiplies every matrix entry by the scalar","Adds a new row","Transposes the matrix","Deletes zero values"],0,"Scalar multiplication applies the scalar to each element."),
+MC("m6-05","Matrix Operations","Medium","Module 6","What matrix size does OpenGL commonly use for transformations?",["4×4","2×2","3×2","1×4"],0,"Homogeneous 3D transformations are represented with 4×4 matrices."),
+MC("m6-06","Homogeneous Coordinates","Easy","Module 6","Which coordinates represent a position in space?",["(x, y, z, 1)","(x, y, z, 0)","(x, y)","(1, 1)"],0,"A homogeneous coordinate w of 1 represents a position."),
+MC("m6-07","Homogeneous Coordinates","Easy","Module 6","Which coordinates represent a direction?",["(x, y, z, 0)","(x, y, z, 1)","(0, 0, 0, 1)","(x, y)"],0,"A w value of 0 represents a direction, so translation does not affect it."),
+MC("m6-08","Translation","Medium","Module 6","What happens when (10,10,10,1) is translated by 10 units along X?",["It becomes (20,10,10,1)","It becomes (10,20,10,1)","It becomes (100,10,10,1)","It becomes (0,10,10,1)"],0,"Translation adds 10 to the X coordinate while leaving Y and Z unchanged."),
+MC("m6-09","Translation","Medium","Module 6","In the module's translation matrix array, where are x, y, and z translation values placed?",["The fourth entry of the first three rows","Only on the main diagonal","The final row","The first column"],0,"The row-major array shown places x, y, and z at indices 3, 7, and 11."),
+MC("m6-10","Animation","Easy","Module 6","Which GLUT function schedules modifyPolygon() to run later?",["glutTimerFunc()","glutDisplayFunc()","glutCreateWindow()","glutPostRedisplay()"],0,"glutTimerFunc registers a timed callback."),
+MC("m6-11","Animation","Easy","Module 6","Which function requests that the active window be redrawn after vertices change?",["glutPostRedisplay()","glFlush()","glMapBuffer()","glDeleteBuffers()"],0,"glutPostRedisplay marks the window for another display callback."),
+MC("m6-12","Scaling","Easy","Module 6","What does scaling by (2,2,2) do?",["Doubles the vector along all three axes","Moves it by two units","Rotates it twice","Sets every coordinate to two"],0,"Uniform scale factors of two multiply X, Y, and Z by two."),
+MC("m6-13","Combined Transformations","Medium","Module 6","Why does the order of transformation matrices matter?",["Matrix multiplication is generally not commutative","All transformations use different data types","OpenGL supports only one matrix","The order changes the number of vertices"],0,"Changing multiplication order can produce a different final transformation."),
+MC("m6-14","3D Primitives","Easy","Module 6","How many quad faces are used to draw the sample cube?",["6","4","8","12"],0,"A cube has six faces, each represented by one quad."),
+MC("m6-15","3D Primitives","Medium","Module 6","How many vertices are submitted for the sample cube using six independent quads?",["24","8","12","36"],0,"Each of the six quads supplies four vertices, producing 24 submitted vertices."),
+MC("m6-16","3D Primitives","Easy","Module 6","How many triangular faces form the sample pyramid?",["4","3","5","6"],0,"The pyramid sample draws front, right, back, and left triangular faces."),
+MC("m6-17","VBO Offsets","Hard","Module 6","What is the purpose of BUFFER_OFFSET(i)?",["Convert a byte offset into a pointer-like value for a bound VBO","Allocate i buffers","Move the object i pixels","Count array elements"],0,"When a VBO is bound, pointer parameters represent offsets inside its data store."),
+MC("m6-18","VBO Offsets","Hard","Module 6","Why does glVertexPointer(3, GL_FLOAT, 0, BUFFER_OFFSET(36)) begin after 36 bytes?",["It skips nine preceding GLfloat values","It skips 36 vertices","It selects vertex 36","It reserves color-buffer space"],0,"Nine floats at four bytes each occupy 36 bytes."),
+MC("m6-19","Debug Output","Medium","Module 6","Which feature sends OpenGL diagnostic messages to MessageCallback?",["GL_DEBUG_OUTPUT","GL_COLOR_ARRAY","GL_READ_WRITE","GL_ELEMENT_ARRAY_BUFFER"],0,"Enabling GL_DEBUG_OUTPUT activates debug-message reporting."),
+MC("m6-20","Debug Output","Medium","Module 6","Which function registers the OpenGL debug callback?",["glDebugMessageCallback()","glutDisplayFunc()","glColorPointer()","glGetString()"],0,"glDebugMessageCallback supplies the function that receives diagnostic messages."),
+MC("m6-21","OpenGL Information","Easy","Module 6","Which call can retrieve the supported OpenGL version string?",["glGetString(GL_VERSION)","glGetVersion()","glewInit(GL_VERSION)","glVersionString()"],0,"glGetString with GL_VERSION returns the implementation's version string."),
+MC("m6-22","Color Arrays","Easy","Module 6","Which client state must be enabled to use a color array?",["GL_COLOR_ARRAY","GL_COLOR_BUFFER_BIT","GL_ARRAY_COLOR","GL_RGBA"],0,"GL_COLOR_ARRAY activates per-vertex color data supplied through glColorPointer."),
+MC("m6-23","Color Arrays","Medium","Module 6","What does glColorPointer(3, GL_FLOAT, 0, offset) describe?",["Three tightly packed float color components per vertex","Three vertices in the object","A three-byte color","Three separate buffers"],0,"The parameters specify component count, component type, stride, and starting location."),
+MC("m6-24","Buffer Updates","Easy","Module 6","What is glBufferSubData() used for?",["Replace a selected region of an existing buffer","Create a window","Delete part of a matrix","Draw one array element"],0,"glBufferSubData updates bytes within an already allocated buffer data store."),
+MC("m6-25","Array Drawing","Medium","Module 6","What does glArrayElement(12) do between glBegin() and glEnd()?",["Processes array element 12 using enabled client arrays","Draws 12 primitives","Allocates 12 buffers","Moves the pointer by 12 bytes"],0,"glArrayElement selects the indexed vertex and other enabled per-vertex attributes."),
+CB("m6-code-01","Homogeneous Coordinates","Easy","Module 6 code sample","Complete the homogeneous-coordinate value used for a position.",`GLfloat x=10.0f, y=10.0f, z=10.0f;
+GLfloat w = __BLANK_1__;`,[{id:1,answer:"1.0f",accepted:["1","1.0"],caseSensitive:false}],"A position has w = 1; a direction has w = 0."),
+CB("m6-code-02","Translation","Hard","Module 6 code sample","Complete the X-coordinate calculation for translation matrix ta.",`GLfloat tx;
+tx = (ta[0]*mapV[startindex])
+   + (ta[1]*mapV[startindex+1])
+   + (ta[2]*mapV[startindex+2])
+   + __BLANK_1__;`,[{id:1,answer:"(ta[3] * w)",accepted:["(ta[3]*w)","ta[3]*w"],caseSensitive:true}],"The fourth value in the first matrix row contributes the X translation multiplied by w."),
+CB("m6-code-03","Animation","Medium","Module 6 code sample","Schedule modifyPolygon and request redisplay after modifying the mapped vertices.",`void display(){
+  polygon();
+  glFlush();
+  __BLANK_1__
 }
+void modifyPolygon(int value){
+  // modify vertices
+  __BLANK_2__
+}`,[{id:1,answer:"glutTimerFunc(1000, modifyPolygon, ctr++);",accepted:["glutTimerFunc(1000,modifyPolygon,ctr++);"],caseSensitive:true},{id:2,answer:"glutPostRedisplay();",accepted:["glutPostRedisplay()"],caseSensitive:true}],"The timer schedules the update callback and glutPostRedisplay requests a new frame."),
+CB("m6-code-04","3D Primitives","Easy","Module 6 code sample","Begin drawing the cube's six quadrilateral faces.",`void displayCube(){
+  glClear(GL_COLOR_BUFFER_BIT);
+  __BLANK_1__
+  // 24 cube vertices
+  glEnd();
+}`,[{id:1,answer:"glBegin(GL_QUADS);",accepted:["glBegin(GL_QUADS)"],caseSensitive:true}],"The cube sample represents each face as a quadrilateral."),
+CB("m6-code-05","VBO Offsets","Medium","Module 6 code sample","Define the macro used to pass a byte offset into a bound VBO.",`__BLANK_1__
+#include <GL/glew.h>`,[{id:1,answer:"#define BUFFER_OFFSET(i) ((void*)(i))",accepted:["#define BUFFER_OFFSET(i) ((void *) (i))"],caseSensitive:true}],"The macro casts a numeric byte offset to the pointer form required by the legacy array-pointer API."),
+CB("m6-code-06","Debug Output","Medium","Module 6 code sample","Enable OpenGL debug output and register MessageCallback.",`if (err == GLEW_OK) {
+  __BLANK_1__
+  __BLANK_2__
+  glutMainLoop();
+}`,[{id:1,answer:"glEnable(GL_DEBUG_OUTPUT);",accepted:["glEnable ( GL_DEBUG_OUTPUT );"],caseSensitive:true},{id:2,answer:"glDebugMessageCallback(MessageCallback, 0);",accepted:["glDebugMessageCallback( MessageCallback, 0 );"],caseSensitive:true}],"Debug output must be enabled before the callback can receive implementation messages."),
+CB("m6-code-07","Color Arrays","Medium","Module 6 code sample","Enable the color array and define three float components per color.",`glEnableClientState(GL_VERTEX_ARRAY);
+__BLANK_1__
+glVertexPointer(3, GL_FLOAT, 0, 0);
+__BLANK_2__`,[{id:1,answer:"glEnableClientState(GL_COLOR_ARRAY);",accepted:["glEnableClientState(GL_COLOR_ARRAY)"],caseSensitive:true},{id:2,answer:"glColorPointer(3, GL_FLOAT, 0, BUFFER_OFFSET(colorOffset));",accepted:["glColorPointer(3,GL_FLOAT,0,BUFFER_OFFSET(colorOffset));"],caseSensitive:true}],"The color client state and pointer tell OpenGL where each vertex's RGB values are stored."),
+CB("m6-code-08","Buffer Updates","Hard","Module 6 code sample","Copy the triangle colors into a selected region of the bound buffer.",`size_t colorOffset = ((9*4)+(12*6))*sizeof(GLfloat);
+size_t colorBytes = (9*4)*sizeof(GLfloat);
+__BLANK_1__`,[{id:1,answer:"glBufferSubData(GL_ARRAY_BUFFER, colorOffset, colorBytes, colorstriangle);",accepted:["glBufferSubData(GL_ARRAY_BUFFER,colorOffset,colorBytes,colorstriangle);"],caseSensitive:true}],"glBufferSubData receives the target, destination byte offset, byte count, and source array."),
+CB("m6-code-09","Array Drawing","Medium","Module 6 code sample","Submit the first three enabled array elements as one triangle.",`glBegin(GL_TRIANGLES);
+__BLANK_1__
+__BLANK_2__
+__BLANK_3__
+glEnd();`,[{id:1,answer:"glArrayElement(0);",accepted:["glArrayElement(0)"],caseSensitive:true},{id:2,answer:"glArrayElement(1);",accepted:["glArrayElement(1)"],caseSensitive:true},{id:3,answer:"glArrayElement(2);",accepted:["glArrayElement(2)"],caseSensitive:true}],"Indices 0, 1, and 2 provide the three vertices and enabled attributes for one triangle.")
+]}
 
 };
 
